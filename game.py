@@ -9,7 +9,36 @@ globl_draw_boxes = True
 SIZE = WIDTH, HEIGHT = 1280, 720 #the width and height of our screen
 BACKGROUND_COLOR = pygame.Color('white') #The background colod of our window
 FPS = 10 #Frames per second
- 
+
+class Chunk():
+    def __init__(self, size=100):
+        self.size = size
+
+        self.heights = []
+        self.textures = []
+
+        self.entities = []
+
+    def add_entity(self, entity):
+        self.entities.append(entity)
+
+
+class Map():
+    def __init__(self, size=[20, 20]):
+        self.size = size
+
+        self.chunks = [[], []]
+        self.chunk_size = 100
+
+
+    def load_chunk(self, pos):
+        pass
+
+    def create_chunk(self, pos):
+        pass
+        
+
+
 class MySprite(pygame.sprite.Sprite):
     def __init__(self, path, scale=1, flip=False):
         super(MySprite, self).__init__()
@@ -107,7 +136,7 @@ class Character():
             #TODO fix algorithm
             for vec in blocked_directions:
                 res = vec + self.move_dir*0.8
-                print(res, vec)
+                #print(res, vec)
                 if res.length() < vec.length():
                     #blocked = True
                     if math.sqrt(vec[0]*vec[0] + self.move_dir[0]*self.move_dir[0]) > math.sqrt(vec[1]*vec[1] + self.move_dir[1]*self.move_dir[1]):
@@ -184,13 +213,16 @@ def main():
     screen = pygame.display.set_mode(SIZE)
     clock = pygame.time.Clock()
  
+    curr_chunk = Chunk(800)
+
     mage = Character("Dude", scale=4)
     mage.pos.xy = (WIDTH/2 - mage.size[0]), (HEIGHT/2 - mage.size[1]/2)
 
+    #TODO add all elements to the chunk model
     trees = []
     for i in range(6):
-        trees.append(Entity("./img/tree/tree_0.png", [random.randint(0, WIDTH), random.randint(0, HEIGHT)], scale=6))
-        trees.append(Entity("./img/pine/pine_0.png", [random.randint(0, WIDTH), random.randint(0, HEIGHT)], scale=6))
+        trees.append(Entity("./img/tree/tree_0.png", [random.randint(0, curr_chunk.size), random.randint(0, curr_chunk.size)], scale=6))
+        trees.append(Entity("./img/pine/pine_0.png", [random.randint(0, curr_chunk.size), random.randint(0, curr_chunk.size)], scale=6))
 
     collision_boxes = []
     border_boxes = []
@@ -198,6 +230,10 @@ def main():
         collision_boxes.append(tree.coll_box)
         border_boxes.append(tree.bord_box)
 
+
+    # add trees to current chunk
+    for tree in trees:
+        curr_chunk.add_entity(tree)
 
     c = 0 
     while True:
@@ -225,9 +261,13 @@ def main():
         # draw the background
         screen.fill(pygame.Color(78, 86, 82))
 
-        # draw trees
-        for tree in trees:
-            screen.blit(tree.image, tree.get_pos())
+        # # draw trees
+        # for tree in trees:
+            # screen.blit(tree.image, tree.get_pos())
+
+        # draw trees from current chunk
+        for entity in curr_chunk.entities:
+            screen.blit(entity.image, entity.get_pos())
 
         # draw mage
         mage.update(screen)
