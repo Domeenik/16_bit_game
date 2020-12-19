@@ -1,0 +1,16 @@
+{
+    "general": {
+        "size": [
+            1280,
+            720
+        ]
+    },
+    "cosmetics":{
+        "font": "Comic"
+    },
+    "debugging":{
+        "display_fps": true,
+        "draw_coll_boxes": true,
+        "draw_frames": true
+    }   
+}
