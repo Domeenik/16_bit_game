@@ -28,13 +28,37 @@ class Game():
         self.start()
 
     def add_objects(self):
-        self.player = Entity1([40,40], name="player", size=[64,64])
+        self.all_sprites = pygame.sprite.Group()
+        
+        # add player
+        self.player = Player([40,40], name="player", size=[32,32])
         self.player.add_animation("./img/mage/idle", "idle", update_rate=9)
-        self.player.add_animation("./img/mage/walk", "walk", update_rate=20)
+        self.player.add_animation("./img/mage/idle", "idle_right", update_rate=9)
+        self.player.add_animation("./img/mage/idle", "idle_left", update_rate=9, flip=True)
+        self.player.add_animation("./img/mage/walk", "walk_right", update_rate=10)
+        self.player.add_animation("./img/mage/walk", "walk_left", update_rate=10, flip=True)
         self.player.update([10,10])
+        self.all_sprites.add(self.player)
 
-        self.all_sprites = pygame.sprite.Group(self.player)
+        # add trees
+        trees = []
+        for i in range(100):
+            trees.append(StaticEntity([random.randint(0, self.size[0]), random.randint(0, self.size[1])], size=[64, 64]))
+            if i >= random.randint(0,100):
+                trees[i].add_animation("./img/trees/pine_0.png", "idle")
+            else:
+                trees[i].add_animation("./img/trees/tree_0.png", "idle")
+            trees[i].update()
+            self.all_sprites.add(trees[i])
 
+    def user_input(self, keys):
+        # update player
+        self.player.interaction(keys)
+
+        # close the game via escape
+        if keys[pygame.K_ESCAPE]:
+            pygame.quit()
+            quit()
 
     def start(self):
         c = 0
@@ -42,8 +66,12 @@ class Game():
             # repaint background
             self.screen.fill(self.bkg_color)
             
+            # get pressed keys for control
+            self.user_input(pygame.key.get_pressed())
+
             # draw entities
             self.all_sprites.update()
+            self.all_sprites = pygame.sprite.Group(sorted(self.all_sprites, key=lambda x: x.pos[1])) # prints '(0, 100)'
             self.all_sprites.draw(self.screen)
 
             # update loop
