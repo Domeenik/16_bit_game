@@ -9,8 +9,6 @@ import operator
 from complementary import *
 from objects import *
 
-
-
 class Game():
     def __init__(self, width=None, height=None):
         # general setup
@@ -26,28 +24,33 @@ class Game():
         self.font = pygame.font.SysFont(self.settings.get("cosmetics", "font"), 25)
         self.clock = pygame.time.Clock()
 
-        self.dummy_animation = MySprite("./img/mage/idle", 10)
-        self.dummy_group = pygame.sprite.Group(self.dummy_animation)
-
-        self.entity = Entity([30,30])
-        self.entity.add_animation(self.dummy_animation, "idle")
-
+        self.add_objects()
         self.start()
+
+    def add_objects(self):
+        self.player = Entity1([40,40], name="player", size=[64,64])
+        self.player.add_animation("./img/mage/idle", "idle", update_rate=9)
+        self.player.add_animation("./img/mage/walk", "walk", update_rate=20)
+        self.player.update([10,10])
+
+        self.all_sprites = pygame.sprite.Group(self.player)
 
 
     def start(self):
+        c = 0
         while True:
             # repaint background
             self.screen.fill(self.bkg_color)
-
-            self.dummy_group.update()
-            self.dummy_group.draw(self.screen)
-            self.entity.update()
+            
+            # draw entities
+            self.all_sprites.update()
+            self.all_sprites.draw(self.screen)
 
             # update loop
             self.update_fps(display=True)
             pygame.display.update()
             self.clock.tick(60)
+            c += 1
 
             # check for quit
             for event in pygame.event.get():
