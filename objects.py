@@ -1,5 +1,6 @@
 import pygame
 import os
+import random
 
 class Entity(pygame.sprite.Sprite):
     def __init__(self, pos, name=None, size=[16,16], update_rate=1):
@@ -18,11 +19,13 @@ class Entity(pygame.sprite.Sprite):
         self.counter = 0
         self.index = 0
 
+        #Todo: add hover animation
+
     def update(self, pos=None):
         # update position
         if pos:
             self.pos = pygame.Vector2(pos)
-        self.rect = pygame.Rect(self.pos[0] + int(self.size[0]/2), self.pos[1] + int(self.size[1]), self.size[0], self.size[1])
+        self.rect = pygame.Rect(self.pos[0] - int(self.size[0]/2), self.pos[1] - int(self.size[1]), self.size[0], self.size[1])
            
         # update image
         self.counter+=1
@@ -36,6 +39,7 @@ class Entity(pygame.sprite.Sprite):
     def add_animation(self, path, name, flip=False, update_rate=1):
         self.animations[name] = self.load_images(path, flip=flip)
         self.update_rates[name] = update_rate
+
     def set_animation(self, name):
         self.animation = name
 
@@ -82,7 +86,7 @@ class StaticEntity(Entity):
         # update position
         if pos:
             self.pos = pygame.Vector2(pos)
-        self.rect = pygame.Rect(self.pos[0] + int(self.size[0]/2), self.pos[1] + int(self.size[1]), self.size[0], self.size[1])
+        self.rect = pygame.Rect(self.pos[0] - int(self.size[0]/2), self.pos[1] - int(self.size[1]), self.size[0], self.size[1])
            
         # update image
         self.image = self.animations[self.animation][self.index]
@@ -130,3 +134,58 @@ class Player(DynamicEntity):
         
         # add move vetor to position
         self.pos += self.move_dir
+
+
+class Companion(DynamicEntity):
+    def __init__(self, master, pos, name=None, size=[16,16], update_rate=1):
+        super(Companion, self).__init__(pos, name, size, update_rate)
+
+        self.master = master
+        self.poi_rad = self.size[0]*10
+        self.new_pos = pygame.Vector2(0,0)
+        self.set_animation("idle_right")
+
+    #ToDo: think about a structure
+    def update(self):
+        # decrease movement
+        self.move_dir /= 1.5
+
+        # update speed depending on master
+        self.speed = self.master.speed/2
+
+        # get point of interest
+        self.poi = self.master.pos
+
+        # get distance to poi
+        distance = self.poi - self.pos
+
+        # calculate a new position
+        if distance.length() >= self.poi_rad - 10 or random.randint(0,1000) > 995:
+            self.new_pos = self.poi + 0.5*self.poi_rad*pygame.Vector2(random.randint(-100,100)/100, random.randint(-100, 100)/100)
+
+        # move to new position
+        if not pygame.Vector2(self.new_pos - self.pos).length() < 10:
+            self.move_dir -= (self.pos - self.new_pos).normalize()
+
+            # normalize vector to length of speed
+            if self.move_dir.length() > self.speed:
+                self.move_dir = self.move_dir.normalize() * self.speed
+        
+            # add move-vetor to position
+            self.pos += self.move_dir
+
+        # if no movement reset animation and reset move vector
+        if self.move_dir.length() < 0.1:
+            if self.move_dir[0] > 0:
+                self.set_animation("idle_right")
+            elif self.move_dir[0] < 0:
+                self.set_animation("idle_left")
+            self.move_dir = pygame.Vector2(0,0)
+        else:
+            if self.move_dir[0] > 0:
+                self.set_animation("walk_right")
+            elif self.move_dir[0] < 0:
+                self.set_animation("walk_left")
+
+            
+        super().update()

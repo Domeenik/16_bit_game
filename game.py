@@ -31,14 +31,21 @@ class Game():
         self.all_sprites = pygame.sprite.Group()
         
         # add player
-        self.player = Player([40,40], name="player", size=[32,32])
+        self.player = Player([10,10], name="player", size=[32,32])
         self.player.add_animation("./img/mage/idle", "idle", update_rate=9)
         self.player.add_animation("./img/mage/idle", "idle_right", update_rate=9)
         self.player.add_animation("./img/mage/idle", "idle_left", update_rate=9, flip=True)
         self.player.add_animation("./img/mage/walk", "walk_right", update_rate=10)
         self.player.add_animation("./img/mage/walk", "walk_left", update_rate=10, flip=True)
-        self.player.update([10,10])
         self.all_sprites.add(self.player)
+
+        # add companion
+        self.companion = Companion(self.player, [40,40], name="player", size=[32,32])
+        self.companion.add_animation("./img/cat/cat_0.png", "idle_right", update_rate=9, flip=True)
+        self.companion.add_animation("./img/cat/cat_0.png", "idle_left", update_rate=9)
+        self.companion.add_animation("./img/cat/walk", "walk_right", update_rate=9, flip=True)
+        self.companion.add_animation("./img/cat/walk", "walk_left", update_rate=9)
+        self.all_sprites.add(self.companion)
 
         # add trees
         trees = []
@@ -48,7 +55,7 @@ class Game():
                 trees[i].add_animation("./img/trees/pine_0.png", "idle")
             else:
                 trees[i].add_animation("./img/trees/tree_0.png", "idle")
-            trees[i].update()
+            #trees[i].update()
             self.all_sprites.add(trees[i])
 
     def user_input(self, keys):
@@ -71,7 +78,7 @@ class Game():
 
             # draw entities
             self.all_sprites.update()
-            self.all_sprites = pygame.sprite.Group(sorted(self.all_sprites, key=lambda x: x.pos[1])) # prints '(0, 100)'
+            #self.all_sprites = pygame.sprite.Group(sorted(self.all_sprites, key=lambda x: x.pos[1])) # prints '(0, 100)'
             self.all_sprites.draw(self.screen)
 
             # update loop
