@@ -46,11 +46,11 @@ class Entity(pygame.sprite.Sprite):
     def load_images(self, path, flip):
         images = []
         if path.endswith(".png"):
-            images.append(pygame.image.load(path))
+            images.append(pygame.image.load(path).convert_alpha())
         else:
             for filename in sorted(os.listdir(path)):
                 if filename.endswith(".png"):
-                    images.append(pygame.image.load(os.path.join(path, filename)))
+                    images.append(pygame.image.load(os.path.join(path, filename)).convert_alpha())
         # resize all images
         images = self.resize_images(images, self.size)
         images = self.flip_images(images, flip)

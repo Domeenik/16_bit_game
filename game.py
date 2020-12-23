@@ -78,7 +78,8 @@ class Game():
 
             # draw entities
             self.all_sprites.update()
-            #self.all_sprites = pygame.sprite.Group(sorted(self.all_sprites, key=lambda x: x.pos[1])) # prints '(0, 100)'
+            self.all_sprites = pygame.sprite.Group(sorted(self.all_sprites, key=lambda x: x.pos[1])) # prints '(0, 100)'
+            #ToDo update only changes
             self.all_sprites.draw(self.screen)
 
             # update loop
