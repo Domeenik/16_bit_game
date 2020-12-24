@@ -2,6 +2,98 @@ import pygame
 import os
 import random
 
+#ToDo function for generating random coords in rect
+
+class Camera():
+    def __init__(self, size=[600,400], max_size=[1000,1000]):
+        self.size = size
+        self.camera = pygame.Rect(0, 0, size[0], size[1])
+        self.max_size = max_size
+
+    def apply(self, entity):
+        return entity.rect.move(self.camera.topleft)
+
+    def update(self, target):
+        x = - target.rect.x + self.size[0]/2
+        y = - target.rect.y + self.size[1]/2
+
+        # limit to borders
+        x = min(0, x)
+        y = min(0, y)
+        #x = max(-(self.size[0] - self.max_size[0]), x)
+        #y = max(-(self.size[1] - self.max_size[1]), y)
+    
+        # recalculate camera rect
+        self.camera = pygame.Rect(x, y, self.size[0], self.size[1])
+
+class Map():
+    def __init__(self, display_size=[600,400], size=[10,10], chunk_size=[500,500]):
+        self.size = size
+        self.chunk_size = chunk_size
+        self.display_size = display_size
+
+        # storing the Chunk-element
+        self.chunks = []
+        self.current_chunks = []
+        self.current_chunk = 0
+
+        self.generate_chunks()
+
+        self.rect_list = []
+        for chunk in self.chunks:
+            self.rect_list.append(chunk.rect)
+
+
+    def generate_chunks(self):
+        for j in range(self.size[0]):
+            for k in range(self.size[1]):
+                self.chunks.append(Chunk((j, k), self.chunk_size))
+
+
+    def get_sprites(self, camera):
+        # get collided rects
+        camera_rect = pygame.Rect(- camera.camera.x, - camera.camera.y, camera.camera.width, camera.camera.height)
+        collide_rects = camera_rect.collidelistall(self.rect_list)
+
+        ret_sprites = []
+        self.current_chunks = []
+        for index in collide_rects:
+            ret_sprites.append(self.chunks[index].sprites)
+            self.current_chunks.append(self.chunks)
+        
+        return ret_sprites
+    
+    def update(self):
+        for chunk in self.current_chunks:
+            chunk.update()
+
+
+class Chunk():
+    def __init__(self, pos, size=[100, 100]):
+        self.pos = pygame.Vector2(pos[1]*size[0], pos[0]*size[1])        
+        self.size = size
+        self.rect = pygame.Rect(pos[1]*size[0], pos[0]*size[1], size[0], size[1])
+
+        self.sprites = pygame.sprite.Group()
+        self.generate_terrain()
+
+    def generate_terrain(self):
+        trees = []
+        amount = random.randint(0, 20)
+        for i in range(amount):
+            #trees.append(StaticEntity([random.randint(self.pos[0], self.pos[0] + self.size[0]), random.randint(self.pos[1], self.pos[1] + self.size[1])], size=[64, 64]))
+            trees.append(StaticEntity([random.randint(self.rect.x, self.rect.x + self.size[0]), random.randint(self.rect.y, self.rect.y + self.size[1])], size=[64, 64]))
+            if i >= random.randint(0,amount):
+                trees[i].add_animation("./img/trees/pine_0.png", "idle")
+            else:
+                trees[i].add_animation("./img/trees/tree_0.png", "idle")
+            #trees[i].update()
+            self.sprites.add(trees[i])
+
+    def update(self):
+        pass
+
+
 class Entity(pygame.sprite.Sprite):
     def __init__(self, pos, name=None, size=[16,16], update_rate=1):
         super(Entity, self).__init__()
@@ -40,6 +132,9 @@ class Entity(pygame.sprite.Sprite):
         self.animations[name] = self.load_images(path, flip=flip)
         self.update_rates[name] = update_rate
 
+    def correct_position(self, pos):
+        self.offset = pos
+
     def set_animation(self, name):
         self.animation = name
 
@@ -77,6 +172,8 @@ class DynamicEntity(Entity):
         self.speed = 1
         self.move_dir = pygame.Vector2(0, 0)
 
+    def set_offset(self, offset):
+        self.pos += offset
 
 class StaticEntity(Entity):
     def __init__(self, pos, name=None, size=[16,16], update_rate=1):
@@ -134,6 +231,7 @@ class Player(DynamicEntity):
         
         # add move vetor to position
         self.pos += self.move_dir
+
 
 
 class Companion(DynamicEntity):

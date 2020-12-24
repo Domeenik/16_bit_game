@@ -19,10 +19,14 @@ class Game():
 
         # pygame objects
         pygame.init()
-        self.screen = pygame.display.set_mode(self.size)
+        self.screen = pygame.display.set_mode(self.size, flags=pygame.DOUBLEBUF)
         self.clock = pygame.time.Clock()
         self.font = pygame.font.SysFont(self.settings.get("cosmetics", "font"), 25)
         self.clock = pygame.time.Clock()
+
+        # map
+        self.map = Map(display_size=self.size)
+        self.camera = Camera(self.size)
 
         self.add_objects()
         self.start()
@@ -47,17 +51,6 @@ class Game():
         self.companion.add_animation("./img/cat/walk", "walk_left", update_rate=9)
         self.all_sprites.add(self.companion)
 
-        # add trees
-        trees = []
-        for i in range(100):
-            trees.append(StaticEntity([random.randint(0, self.size[0]), random.randint(0, self.size[1])], size=[64, 64]))
-            if i >= random.randint(0,100):
-                trees[i].add_animation("./img/trees/pine_0.png", "idle")
-            else:
-                trees[i].add_animation("./img/trees/tree_0.png", "idle")
-            #trees[i].update()
-            self.all_sprites.add(trees[i])
-
     def user_input(self, keys):
         # update player
         self.player.interaction(keys)
@@ -75,18 +68,35 @@ class Game():
             
             # get pressed keys for control
             self.user_input(pygame.key.get_pressed())
+            #ToDo implement collisions
+
+            # add sprites from loaded chunks
+            #self.all_sprites = pygame.sprite.Group(self.map.chunks[self.map.current_chunk].sprites)
+            self.all_sprites = pygame.sprite.Group(self.map.get_sprites(self.camera))
+            self.all_sprites.add(self.player)
+            self.all_sprites.add(self.companion)
+            #self.map.update(self.player.pos)
 
             # draw entities
             self.all_sprites.update()
             self.all_sprites = pygame.sprite.Group(sorted(self.all_sprites, key=lambda x: x.pos[1])) # prints '(0, 100)'
+           
             #ToDo update only changes
-            self.all_sprites.draw(self.screen)
+            # get camera position and translate sprites
+            self.camera.update(self.player)
+            for sprite in self.all_sprites:
+                self.screen.blit(sprite.image, self.camera.apply(sprite))
+
+            #ToDo reimplement
+            # draw current chunk
+            #pygame.draw.rect(self.screen, (0, 255, 255), self.camera.apply(self.map.chunks[self.map.current_chunk]), 1)
 
             # update loop
             self.update_fps(display=True)
             pygame.display.update()
-            self.clock.tick(60)
+            self.clock.tick(1000)
             c += 1
+
 
             # check for quit
             for event in pygame.event.get():
