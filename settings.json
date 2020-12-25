@@ -8,6 +8,19 @@
     "cosmetics":{
         "font": "Comic"
     },
+    "graphics":{
+        "render_lights": true
+    },
+    "map":{
+        "size": [
+            10,
+            10
+        ],
+        "chunk_size": [
+            500,
+            500
+        ]
+    },
     "debugging":{
         "display_fps": true,
         "draw_coll_boxes": true,

@@ -1,6 +1,8 @@
 import pygame
 import os
 import random
+import math
+from perlin_noise import PerlinNoise
 
 #ToDo function for generating random coords in rect
 
@@ -42,7 +44,6 @@ class Map():
         self.rect_list = []
         for chunk in self.chunks:
             self.rect_list.append(chunk.rect)
-
 
     def generate_chunks(self):
         for j in range(self.size[0]):
@@ -92,6 +93,85 @@ class Chunk():
 
     def update(self):
         pass
+    
+
+class Light(pygame.sprite.Sprite):
+    def __init__(self, pos, size=[16,16], transparency=128, update_rate=1):
+        super(Light, self).__init__()
+        self.rect = pygame.Rect(pos[0], pos[1], size[0], size[1])
+        self.size = size
+        self.update_rate = update_rate
+        self.alpha = transparency
+
+        self.images = []
+        self.image = None
+
+        self.counter = 0
+        self.index = 0
+
+        self.noise = PerlinNoise(octaves=30, seed=777)
+
+    def follow_target(self, target, offset):
+        self.target = target
+        self.offset = pygame.Vector2(offset)
+        self.rect = pygame.Rect(target.rect.topleft, self.size)
+
+    def update(self):        
+        # update position
+        x = self.target.pos[0] - int(self.rect.width/2)
+        y = self.target.pos[1] - int(self.rect.height/2) - int(self.target.size[1]*4/3)
+        self.rect = pygame.Rect(x, y, self.rect.width, self.rect.height)
+        self.pos = self.rect.topleft
+           
+        # update image
+        self.counter+=1
+        if self.counter%int(self.update_rate) == 0:
+            self.index += 1
+        if self.index >= len(self.images):
+            self.index = 0
+    
+        self.image = self.images[self.index]
+
+        # try flickering
+        self.image.set_alpha(80+(self.noise(self.counter/1000))*80)
+
+
+    def add_animation(self, path, flip=False):
+        self.images = self.load_images(path, flip=flip)
+
+    def load_images(self, path, flip):
+        images = []
+        if path.endswith(".png"):
+            images.append(pygame.image.load(path).convert_alpha())
+        else:
+            for filename in sorted(os.listdir(path)):
+                if filename.endswith(".png"):
+                    images.append(pygame.image.load(os.path.join(path, filename)).convert_alpha())
+        # resize all images
+        images = self.resize_images(images, self.size)
+        images = self.flip_images(images, flip)
+        images = self.set_alpha(images, self.alpha)
+        return images
+
+    def set_alpha(self, images, alpha):
+        ret_images = []
+        for i in range(len(images)):
+            ret_img = images[i]
+            ret_img.set_alpha(alpha)
+            ret_images.append(ret_img)
+        return ret_images
+
+    def resize_images(self, images, size):
+        ret_images = []
+        for i in range(len(images)):
+            ret_images.append(pygame.transform.scale(images[i], (size[0], size[1])))
+        return ret_images
+
+    def flip_images(self, images, flip):
+        ret_images = []
+        for i in range(len(images)):
+            ret_images.append(pygame.transform.flip(images[i], flip, 0))
+        return ret_images
 
 
 class Entity(pygame.sprite.Sprite):
@@ -112,6 +192,10 @@ class Entity(pygame.sprite.Sprite):
         self.index = 0
 
         #Todo: add hover animation
+        self.hover = None
+
+    def set_hover(self, hover):
+        self.hover = hover
 
     def update(self, pos=None):
         # update position
@@ -127,6 +211,10 @@ class Entity(pygame.sprite.Sprite):
             self.index = 0
     
         self.image = self.animations[self.animation][self.index]
+
+        # update hover
+        if not self.hover == None:
+            self.hover.update(self)
 
     def add_animation(self, path, name, flip=False, update_rate=1):
         self.animations[name] = self.load_images(path, flip=flip)
@@ -287,3 +375,64 @@ class Companion(DynamicEntity):
 
             
         super().update()
+
+class Hover(pygame.sprite.Sprite):
+    def __init__(self, path, size=[16,16], flip=False, update_rate=1):
+        super(Hover, self).__init__()
+        self.size = size
+        self.update_rate = update_rate
+        self.rect = pygame.Rect(0,0,0,0)#pygame.Rect(target.pos[0], target.pos[1] - target.size[1], self.size[0], self.size[1])
+        self.pos = self.rect.topleft
+
+        self.images = []
+        self.image = None
+        self.counter = 0
+        self.index = 0
+
+        self.images = self.load_images(path, flip)
+
+    def add_animation(self, path, flip=False):
+        self.images = self.load_images(path, flip=flip)
+
+    def load_images(self, path, flip):
+        images = []
+        if path.endswith(".png"):
+            images.append(pygame.image.load(path).convert_alpha())
+        else:
+            for filename in sorted(os.listdir(path)):
+                if filename.endswith(".png"):
+                    images.append(pygame.image.load(os.path.join(path, filename)).convert_alpha())
+        # resize all images
+        images = self.resize_images(images, self.size)
+        images = self.flip_images(images, flip)
+        return images
+
+    def resize_images(self, images, size):
+        ret_images = []
+        for i in range(len(images)):
+            ret_images.append(pygame.transform.scale(images[i], (size[0], size[1])))
+        return ret_images
+
+    def flip_images(self, images, flip):
+        ret_images = []
+        for i in range(len(images)):
+            ret_images.append(pygame.transform.flip(images[i], flip, 0))
+        return ret_images
+
+    def update(self, target):
+        self.target = target
+        
+        # update position
+        x = self.target.pos[0] - int(self.rect.width/2)
+        y = self.target.pos[1] - int(self.rect.height/2) - int(self.target.size[1]*4/3)
+        self.rect = pygame.Rect(x, y, self.rect.width, self.rect.height)
+        self.pos = self.rect.topleft
+           
+        # update image
+        self.counter+=1
+        if self.counter%int(self.update_rate) == 0:
+            self.index += 1
+        if self.index >= len(self.images):
+            self.index = 0
+    
+        self.image = self.images[self.index]
