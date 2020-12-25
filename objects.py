@@ -46,6 +46,7 @@ class Map():
             self.rect_list.append(chunk.rect)
 
     def generate_chunks(self):
+        #ToDo add external map generation -> 1. height, 2. structs, 3. keep-out, 4. forest 
         for j in range(self.size[0]):
             for k in range(self.size[1]):
                 self.chunks.append(Chunk((j, k), self.chunk_size))
@@ -80,7 +81,7 @@ class Chunk():
 
     def generate_terrain(self):
         trees = []
-        amount = random.randint(0, 20)
+        amount = random.randint(0, 50)
         for i in range(amount):
             #trees.append(StaticEntity([random.randint(self.pos[0], self.pos[0] + self.size[0]), random.randint(self.pos[1], self.pos[1] + self.size[1])], size=[64, 64]))
             trees.append(StaticEntity([random.randint(self.rect.x, self.rect.x + self.size[0]), random.randint(self.rect.y, self.rect.y + self.size[1])], size=[64, 64]))
@@ -319,7 +320,6 @@ class Player(DynamicEntity):
         
         # add move vetor to position
         self.pos += self.move_dir
-
 
 
 class Companion(DynamicEntity):

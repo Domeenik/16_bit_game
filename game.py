@@ -28,6 +28,7 @@ class Game():
         map_size = self.settings.get("map", "size")
         chunk_size = self.settings.get("map", "chunk_size")
         self.map = Map(size=map_size, display_size=self.size)
+        self.map_size = [map_size[0]*chunk_size[0], map_size[1]*chunk_size[1]]
         self.camera = Camera(self.size)
 
         # game settings
@@ -39,9 +40,11 @@ class Game():
     def add_objects(self):
         self.all_sprites = pygame.sprite.Group()
         self.lights = pygame.sprite.Group()
+
+        self.spawn = pygame.Vector2(self.map_size[0]/2, self.map_size[1]/2)
         
         # add player
-        self.player = Player([10,10], name="player", size=[32,32])
+        self.player = Player([self.spawn[0],self.spawn[1]], name="player", size=[32,32])
         self.player.add_animation("./img/mage/idle", "idle", update_rate=9)
         self.player.add_animation("./img/mage/idle", "idle_right", update_rate=9)
         self.player.add_animation("./img/mage/idle", "idle_left", update_rate=9, flip=True)
@@ -50,7 +53,7 @@ class Game():
         self.all_sprites.add(self.player)
 
         # add companion
-        self.companion = Companion(self.player, [40,40], name="player", size=[24,24])
+        self.companion = Companion(self.player, [self.spawn[0]+100,self.spawn[1]], name="player", size=[24,24])
         self.companion.add_animation("./img/cat/cat_0.png", "idle_right", update_rate=9, flip=True)
         self.companion.add_animation("./img/cat/cat_0.png", "idle_left", update_rate=9)
         self.companion.add_animation("./img/cat/walk", "walk_right", update_rate=9, flip=True)
@@ -58,7 +61,7 @@ class Game():
         self.all_sprites.add(self.companion)
 
         # campfire
-        self.campfire = DynamicEntity((200,200), name="campfire", size=[32,32])
+        self.campfire = DynamicEntity((self.spawn[0]-200,self.spawn[1]), name="campfire", size=[32,32])
         self.campfire.add_animation("./img/fire/campfire_on", "fire_on", update_rate=10)
         self.campfire.add_animation("./img/fire/campfire_off", "fire_off", update_rate=10)
         self.campfire.set_animation("fire_on")
