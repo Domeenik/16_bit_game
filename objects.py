@@ -3,6 +3,7 @@ import os
 import random
 import math
 from perlin_noise import PerlinNoise
+import time
 
 #ToDo function for generating random coords in rect
 
@@ -192,8 +193,14 @@ class Entity(pygame.sprite.Sprite):
         self.counter = 0
         self.index = 0
 
+        # interactions
+        self.actions = []
+
         #Todo: add hover animation
         self.hover = None
+
+    def add_action(self, action):
+        self.actions.append(action)
 
     def set_hover(self, hover):
         self.hover = hover
@@ -278,50 +285,6 @@ class StaticEntity(Entity):
         self.image = self.animations[self.animation][self.index]
 
 
-class Player(DynamicEntity):
-    def __init__(self, pos, name=None, size=[16,16], update_rate=1):
-        super(Player, self).__init__(pos, name, size, update_rate)
-
-    def interaction(self, keys):
-        # decrease movement
-        self.move_dir /= 1.5
-
-        # if no movement reset animation and reset move vector
-        if self.move_dir.length() < 0.1:
-            if self.move_dir[0] > 0:
-                self.set_animation("idle_right")
-            elif self.move_dir[0] < 0:
-                self.set_animation("idle_left")
-            self.move_dir = pygame.Vector2(0,0)
-
-        # set different speeds by shift and ctrl keys
-        if keys[pygame.K_LSHIFT]:
-            self.speed = 3
-        elif keys[pygame.K_LCTRL]:
-            self.speed = 1
-        else:
-            self.speed = 2
-
-        # add movement
-        if keys[pygame.K_RIGHT]:
-            self.move_dir[0] += self.speed
-            self.set_animation("walk_right")
-        if keys[pygame.K_LEFT]:
-            self.move_dir[0] -= self.speed
-            self.set_animation("walk_left")
-        if keys[pygame.K_UP]:
-            self.move_dir[1] -= self.speed
-        if keys[pygame.K_DOWN]:
-            self.move_dir[1] += self.speed
-
-        # regulate to max speed
-        if self.move_dir.length() > self.speed:
-            self.move_dir = self.move_dir.normalize() * self.speed
-        
-        # add move vetor to position
-        self.pos += self.move_dir
-
-
 class Companion(DynamicEntity):
     def __init__(self, master, pos, name=None, size=[16,16], update_rate=1):
         super(Companion, self).__init__(pos, name, size, update_rate)
@@ -376,63 +339,90 @@ class Companion(DynamicEntity):
             
         super().update()
 
-class Hover(pygame.sprite.Sprite):
-    def __init__(self, path, size=[16,16], flip=False, update_rate=1):
-        super(Hover, self).__init__()
-        self.size = size
-        self.update_rate = update_rate
-        self.rect = pygame.Rect(0,0,0,0)#pygame.Rect(target.pos[0], target.pos[1] - target.size[1], self.size[0], self.size[1])
-        self.pos = self.rect.topleft
+class Action():
+    #ToDo restruct -> no need for key?
+    def __init__(self, name, key):
+        self.name = name
+        self.key = key
 
-        self.images = []
-        self.image = None
-        self.counter = 0
-        self.index = 0
 
-        self.images = self.load_images(path, flip)
+class Player(DynamicEntity):
+    def __init__(self, pos, name=None, size=[16,16], update_rate=1):
+        super(Player, self).__init__(pos, name, size, update_rate)
+        self.radius = 100
 
-    def add_animation(self, path, flip=False):
-        self.images = self.load_images(path, flip=flip)
+    def interaction(self, keys):
+        # decrease movement
+        self.move_dir /= 1.5
 
-    def load_images(self, path, flip):
-        images = []
-        if path.endswith(".png"):
-            images.append(pygame.image.load(path).convert_alpha())
+        #ToDo better way to call?
+        if keys[pygame.K_e]:
+            for action in self.available_actions:
+                action[0].action(Action("use", "e"))
+            time.sleep(0.2)
+
+        # if no movement reset animation and reset move vector
+        if self.move_dir.length() < 0.1:
+            if self.move_dir[0] > 0:
+                self.set_animation("idle_right")
+            elif self.move_dir[0] < 0:
+                self.set_animation("idle_left")
+            self.move_dir = pygame.Vector2(0,0)
+
+        # set different speeds by shift and ctrl keys
+        if keys[pygame.K_LSHIFT]:
+            self.speed = 3
+        elif keys[pygame.K_LCTRL]:
+            self.speed = 1
         else:
-            for filename in sorted(os.listdir(path)):
-                if filename.endswith(".png"):
-                    images.append(pygame.image.load(os.path.join(path, filename)).convert_alpha())
-        # resize all images
-        images = self.resize_images(images, self.size)
-        images = self.flip_images(images, flip)
-        return images
+            self.speed = 2
 
-    def resize_images(self, images, size):
-        ret_images = []
-        for i in range(len(images)):
-            ret_images.append(pygame.transform.scale(images[i], (size[0], size[1])))
-        return ret_images
+        # add movement
+        if keys[pygame.K_RIGHT]:
+            self.move_dir[0] += self.speed
+            self.set_animation("walk_right")
+        if keys[pygame.K_LEFT]:
+            self.move_dir[0] -= self.speed
+            self.set_animation("walk_left")
+        if keys[pygame.K_UP]:
+            self.move_dir[1] -= self.speed
+        if keys[pygame.K_DOWN]:
+            self.move_dir[1] += self.speed
 
-    def flip_images(self, images, flip):
-        ret_images = []
-        for i in range(len(images)):
-            ret_images.append(pygame.transform.flip(images[i], flip, 0))
-        return ret_images
-
-    def update(self, target):
-        self.target = target
+        # regulate to max speed
+        if self.move_dir.length() > self.speed:
+            self.move_dir = self.move_dir.normalize() * self.speed
         
-        # update position
-        x = self.target.pos[0] - int(self.rect.width/2)
-        y = self.target.pos[1] - int(self.rect.height/2) - int(self.target.size[1]*4/3)
-        self.rect = pygame.Rect(x, y, self.rect.width, self.rect.height)
-        self.pos = self.rect.topleft
-           
-        # update image
-        self.counter+=1
-        if self.counter%int(self.update_rate) == 0:
-            self.index += 1
-        if self.index >= len(self.images):
-            self.index = 0
-    
-        self.image = self.images[self.index]
+        # add move vetor to position
+        self.pos += self.move_dir
+
+    def get_objects_in_range(self, entities):
+        self.entities_in_range = []
+        self.available_actions = []
+        for entity in entities:
+            if (self.pos - entity.pos).length() < self.radius:
+                self.entities_in_range.append(entity)
+                if len(entity.actions):
+                    for action in entity.actions:
+                        self.available_actions.append([entity, action])
+        print(self.available_actions)
+
+
+
+class Campfire(DynamicEntity):
+    def __init__(self, pos, name=None, size=[16,16], update_rate=1):
+        super(Campfire, self).__init__(pos, name, size, update_rate)
+        self.state = True
+
+    def toggle(self, state=True):
+        self.state = state
+        if self.state:
+            self.set_animation("fire_on")
+        else:
+            self.set_animation("fire_off")
+
+    def action(self, action):
+        #ToDo shift to entity -> some general functions
+        if action.name == "use":
+            self.toggle(not self.state)
+            

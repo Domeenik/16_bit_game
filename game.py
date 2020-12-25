@@ -38,11 +38,18 @@ class Game():
         self.start()
 
     def add_objects(self):
+        #ToDo planned: structure like:
+        #self.map = pygame.sprite.Group(self.map.get_sprites())
+        #self.actions = self.map.get_interactions()
+
         self.all_sprites = pygame.sprite.Group()
         self.lights = pygame.sprite.Group()
 
         self.spawn = pygame.Vector2(self.map_size[0]/2, self.map_size[1]/2)
         
+        # actions
+        self.use = Action("use", pygame.K_e)
+
         # add player
         self.player = Player([self.spawn[0],self.spawn[1]], name="player", size=[32,32])
         self.player.add_animation("./img/mage/idle", "idle", update_rate=9)
@@ -61,19 +68,19 @@ class Game():
         self.all_sprites.add(self.companion)
 
         # campfire
-        self.campfire = DynamicEntity((self.spawn[0]-200,self.spawn[1]), name="campfire", size=[32,32])
+        self.campfire = Campfire((self.spawn[0]-200,self.spawn[1]), name="campfire", size=[32,32])
         self.campfire.add_animation("./img/fire/campfire_on", "fire_on", update_rate=10)
         self.campfire.add_animation("./img/fire/campfire_off", "fire_off", update_rate=10)
         self.campfire.set_animation("fire_on")
+        self.campfire.add_action(self.use)
 
         # hovers
-        self.hover = Hover("./img/hover/msg", update_rate=100)
+        #self.hover = Hover("./img/hover/msg", update_rate=100)
+        #self.player.set_hover(self.hover)
 
         # light
         self.light = Light(self.campfire.pos, size=[512,512])
         self.light.add_animation("./img/light/circle.png")
-
-        self.player.set_hover(self.hover)
 
     def user_input(self, keys):
         # update player
@@ -96,17 +103,17 @@ class Game():
             self.screen.fill(self.bkg_color)
             
             # get pressed keys for control
-            self.user_input(pygame.key.get_pressed())
             #ToDo implement collisions
 
             # add sprites from loaded chunks
-            #self.all_sprites = pygame.sprite.Group(self.map.chunks[self.map.current_chunk].sprites)
             self.all_sprites = pygame.sprite.Group(self.map.get_sprites(self.camera))
-            self.all_sprites.add(self.player)
-            #self.all_sprites.add(self.player.hover)
             self.all_sprites.add(self.companion)
             self.all_sprites.add(self.campfire)
-            #self.map.update(self.player.pos)
+
+            # update player
+            self.all_sprites.add(self.player)
+            self.player.get_objects_in_range(self.all_sprites)
+            self.user_input(pygame.key.get_pressed())
 
             # lights
             self.light.follow_target(self.campfire, (0,0))
@@ -135,7 +142,7 @@ class Game():
             # update loop
             self.update_fps(display=True)
             pygame.display.update()
-            self.clock.tick(60)
+            self.clock.tick(1000)
             c += 1
 
 
