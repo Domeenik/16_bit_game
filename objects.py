@@ -70,6 +70,12 @@ class Map():
         for chunk in self.current_chunks:
             chunk.update()
 
+    def add_entity(self, entity):
+        pos = entity.pos
+
+        chunk_id = (int(pos[1]/self.chunk_size[1]) * self.size[0]) + int(pos[0]/self.chunk_size[0])
+
+        print(chunk_id)
 
 class Chunk():
     def __init__(self, pos, size=[100, 100]):
@@ -82,7 +88,7 @@ class Chunk():
 
     def generate_terrain(self):
         trees = []
-        amount = random.randint(0, 50)
+        amount = random.randint(0, 25)
         for i in range(amount):
             #trees.append(StaticEntity([random.randint(self.pos[0], self.pos[0] + self.size[0]), random.randint(self.pos[1], self.pos[1] + self.size[1])], size=[64, 64]))
             trees.append(StaticEntity([random.randint(self.rect.x, self.rect.x + self.size[0]), random.randint(self.rect.y, self.rect.y + self.size[1])], size=[64, 64]))
@@ -92,6 +98,9 @@ class Chunk():
                 trees[i].add_animation("./img/trees/tree_0.png", "idle")
             #trees[i].update()
             self.sprites.add(trees[i])
+
+    def add_entity(self, entity):
+        self.sprites.add(entity)
 
     def update(self):
         pass

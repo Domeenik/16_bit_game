@@ -64,16 +64,16 @@ class Game():
         self.campfire = Campfire((self.spawn[0]-200,self.spawn[1]), name="campfire", size=[32,32])
         self.campfire.add_action(self.use)
 
-        # hovers
-        #self.hover = Hover("./img/hover/msg", update_rate=100)
-        #self.player.set_hover(self.hover)
-
         # struct
         self.struct = Structure((self.spawn[0], self.spawn[1]))
         self.struct.add_entity(self.campfire, (10,100))
 
+        # overlay
         self.overlay = Overlay()
         self.overlay_sprites.add(self.overlay.sprites)
+
+        # map generation
+        self.map.add_entity(Entity([600,600]))
 
     def user_input(self, keys):
         # update player
