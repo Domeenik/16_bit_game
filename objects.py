@@ -113,6 +113,8 @@ class Light(pygame.sprite.Sprite):
 
         self.noise = PerlinNoise(octaves=30, seed=777)
 
+        self.is_active = True
+
     def follow_target(self, target, offset):
         self.target = target
         self.offset = pygame.Vector2(offset)
@@ -195,6 +197,9 @@ class Entity(pygame.sprite.Sprite):
 
         # interactions
         self.actions = []
+        
+        # visible aka. blit?
+        self.light = None
 
         #Todo: add hover animation
         self.hover = None
@@ -345,6 +350,7 @@ class Action():
         self.name = name
         self.key = key
 
+        self.active = True
 
 class Player(DynamicEntity):
     def __init__(self, pos, name=None, size=[16,16], update_rate=1):
@@ -414,15 +420,24 @@ class Campfire(DynamicEntity):
         super(Campfire, self).__init__(pos, name, size, update_rate)
         self.state = True
 
+        # light
+        self.light = Light(self.rect.topleft, size=[512,512])
+        self.light.add_animation("./img/light/circle.png")
+        self.light.follow_target(self, (0,0))
+            
+
     def toggle(self, state=True):
         self.state = state
         if self.state:
             self.set_animation("fire_on")
+            self.light.is_active = True
         else:
             self.set_animation("fire_off")
+            self.light.is_active = False
 
     def action(self, action):
         #ToDo shift to entity -> some general functions
         if action.name == "use":
             self.toggle(not self.state)
+
             

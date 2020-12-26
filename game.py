@@ -33,6 +33,7 @@ class Game():
 
         # game settings
         self.render_lights = self.settings.get("graphics", "render_lights")
+        self.fps_cap = self.settings.get("graphics", "fps_cap")
 
         self.add_objects()
         self.start()
@@ -78,10 +79,6 @@ class Game():
         #self.hover = Hover("./img/hover/msg", update_rate=100)
         #self.player.set_hover(self.hover)
 
-        # light
-        self.light = Light(self.campfire.pos, size=[512,512])
-        self.light.add_animation("./img/light/circle.png")
-
     def user_input(self, keys):
         # update player
         self.player.interaction(keys)
@@ -94,6 +91,11 @@ class Game():
         # choose not to render lights for performance boost
         if keys[pygame.K_l]:
             self.render_lights = not self.render_lights
+            time.sleep(0.2)
+
+        # performance mode
+        if keys[pygame.K_p]:
+            self.fps_cap = not self.fps_cap
             time.sleep(0.2)
 
     def start(self):
@@ -115,14 +117,9 @@ class Game():
             self.player.get_objects_in_range(self.all_sprites)
             self.user_input(pygame.key.get_pressed())
 
-            # lights
-            self.light.follow_target(self.campfire, (0,0))
-            self.lights.add(self.light)
-            
             # draw entities
             self.all_sprites.update()
             self.all_sprites = pygame.sprite.Group(sorted(self.all_sprites, key=lambda x: x.pos[1])) # prints '(0, 100)'
-            self.lights.update()
             
             #ToDo update only changes
             # get camera position and translate sprites
@@ -132,8 +129,14 @@ class Game():
             
             # render lights
             if self.render_lights:
-                for light in self.lights:
-                    self.screen.blit(light.image, self.camera.apply(light))
+                for sprite in self.all_sprites:
+                    if not sprite.light == None:
+                        self.lights.add(sprite.light)
+                        
+                self.lights.update()
+                for light in self.lights:                        
+                    if light.is_active:
+                        self.screen.blit(light.image, self.camera.apply(light))
 
             #ToDo reimplement
             # draw current chunk
@@ -142,8 +145,11 @@ class Game():
             # update loop
             self.update_fps(display=True)
             pygame.display.update()
-            self.clock.tick(1000)
             c += 1
+            if self.fps_cap:
+                self.clock.tick(60)
+            else:
+                self.clock.tick(1000)
 
 
             # check for quit

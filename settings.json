@@ -9,7 +9,8 @@
         "font": "Comic"
     },
     "graphics":{
-        "render_lights": true
+        "render_lights": true,
+        "fps_cap": true
     },
     "map":{
         "size": [
