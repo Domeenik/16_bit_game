@@ -357,6 +357,8 @@ class Player(DynamicEntity):
         super(Player, self).__init__(pos, name, size, update_rate)
         self.radius = 100
 
+        self.health = 10
+
     def interaction(self, keys):
         # decrease movement
         self.move_dir /= 1.5
@@ -411,14 +413,50 @@ class Player(DynamicEntity):
                 if len(entity.actions):
                     for action in entity.actions:
                         self.available_actions.append([entity, action])
-        print(self.available_actions)
+        #print(self.available_actions)
 
+
+class Structure():
+    def __init__(self, pos):
+        self.pos = pygame.Vector2(pos)
+        self.sprites = []
+        self.rect = pygame.Rect(pos[0], pos[1], 0,0)
+
+    def add_entity(self, entity, offset):
+        entity_pos = pygame.Vector2(offset) + self.pos
+
+        new_entity = entity
+        new_entity.pos = entity_pos
+
+        self.sprites.append(entity)
+
+
+class Mage(Player):
+    def __init__(self, pos, name=None, size=[16,16], update_rate=1):
+        super(Mage, self).__init__(pos, name, size, update_rate)
+        self.add_animation("./img/mage/idle", "idle", update_rate=9)
+        self.add_animation("./img/mage/idle", "idle_right", update_rate=9)
+        self.add_animation("./img/mage/idle", "idle_left", update_rate=9, flip=True)
+        self.add_animation("./img/mage/walk", "walk_right", update_rate=10)
+        self.add_animation("./img/mage/walk", "walk_left", update_rate=10, flip=True)
+
+
+class Cat(Companion):
+    def __init__(self, master, pos, name=None, size=[16,16], update_rate=1):
+        super(Cat, self).__init__(master, pos, name, size, update_rate)
+        self.add_animation("./img/cat/cat_0.png", "idle_right", update_rate=9, flip=True)
+        self.add_animation("./img/cat/cat_0.png", "idle_left", update_rate=9)
+        self.add_animation("./img/cat/walk", "walk_right", update_rate=9, flip=True)
+        self.add_animation("./img/cat/walk", "walk_left", update_rate=9)
 
 
 class Campfire(DynamicEntity):
     def __init__(self, pos, name=None, size=[16,16], update_rate=1):
         super(Campfire, self).__init__(pos, name, size, update_rate)
         self.state = True
+        self.add_animation("./img/fire/campfire_on", "fire_on", update_rate=10)
+        self.add_animation("./img/fire/campfire_off", "fire_off", update_rate=10)
+        self.set_animation("fire_on")
 
         # light
         self.light = Light(self.rect.topleft, size=[512,512])
@@ -440,4 +478,47 @@ class Campfire(DynamicEntity):
         if action.name == "use":
             self.toggle(not self.state)
 
-            
+
+class OverlayElement(StaticEntity):
+    def __init__(self, pos, name=None, size=[16,16], update_rate=1):
+        super(OverlayElement, self).__init__(pos, name, size, update_rate)
+        self.rect = pygame.Rect(pos[0], pos[1], size[0], size[1])
+
+
+class LifeBar():
+    def __init__(self, max_health=10, health=10):
+        self.sprites = []
+        self.health = health
+        self.max_health = max_health
+
+        # init hearts
+        for i in range(int(self.max_health/2)):
+            heart = OverlayElement(((i*17)+16,20), size=[20,20])
+            heart.add_animation("./img/overlay/heart/heart_full.png", "full")
+            heart.add_animation("./img/overlay/heart/heart_half.png", "half")
+            heart.add_animation("./img/overlay/heart/heart_empty.png", "empty")
+            heart.set_animation("full")
+            self.sprites.append(heart)
+
+        self.update_health(health)
+
+    def update_health(self, health, max_health=10):
+        self.health = health
+        self.max_health = max_health
+        for i in range(len(self.sprites)):
+            if i < self.health/2:
+                self.sprites[i].set_animation("full")
+            elif i == self.health/2:
+                self.sprites[i].set_animation("half")
+            elif i > self.health/2:
+                self.sprites[i].set_animation("empty")
+
+
+
+class Overlay():
+    def __init__(self):
+        self.sprites = []
+        self.life_bar = LifeBar()
+
+        for sprite in self.life_bar.sprites:
+            self.sprites.append(sprite)

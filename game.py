@@ -45,6 +45,7 @@ class Game():
 
         self.all_sprites = pygame.sprite.Group()
         self.lights = pygame.sprite.Group()
+        self.overlay_sprites = pygame.sprite.Group()
 
         self.spawn = pygame.Vector2(self.map_size[0]/2, self.map_size[1]/2)
         
@@ -52,32 +53,27 @@ class Game():
         self.use = Action("use", pygame.K_e)
 
         # add player
-        self.player = Player([self.spawn[0],self.spawn[1]], name="player", size=[32,32])
-        self.player.add_animation("./img/mage/idle", "idle", update_rate=9)
-        self.player.add_animation("./img/mage/idle", "idle_right", update_rate=9)
-        self.player.add_animation("./img/mage/idle", "idle_left", update_rate=9, flip=True)
-        self.player.add_animation("./img/mage/walk", "walk_right", update_rate=10)
-        self.player.add_animation("./img/mage/walk", "walk_left", update_rate=10, flip=True)
+        self.player = Mage([self.spawn[0],self.spawn[1]], name="player", size=[32,32])
         self.all_sprites.add(self.player)
 
         # add companion
-        self.companion = Companion(self.player, [self.spawn[0]+100,self.spawn[1]], name="player", size=[24,24])
-        self.companion.add_animation("./img/cat/cat_0.png", "idle_right", update_rate=9, flip=True)
-        self.companion.add_animation("./img/cat/cat_0.png", "idle_left", update_rate=9)
-        self.companion.add_animation("./img/cat/walk", "walk_right", update_rate=9, flip=True)
-        self.companion.add_animation("./img/cat/walk", "walk_left", update_rate=9)
+        self.companion = Cat(self.player, [self.spawn[0]+100,self.spawn[1]], name="friend", size=[24,24])
         self.all_sprites.add(self.companion)
 
         # campfire
         self.campfire = Campfire((self.spawn[0]-200,self.spawn[1]), name="campfire", size=[32,32])
-        self.campfire.add_animation("./img/fire/campfire_on", "fire_on", update_rate=10)
-        self.campfire.add_animation("./img/fire/campfire_off", "fire_off", update_rate=10)
-        self.campfire.set_animation("fire_on")
         self.campfire.add_action(self.use)
 
         # hovers
         #self.hover = Hover("./img/hover/msg", update_rate=100)
         #self.player.set_hover(self.hover)
+
+        # struct
+        self.struct = Structure((self.spawn[0], self.spawn[1]))
+        self.struct.add_entity(self.campfire, (10,100))
+
+        self.overlay = Overlay()
+        self.overlay_sprites.add(self.overlay.sprites)
 
     def user_input(self, keys):
         # update player
@@ -98,6 +94,14 @@ class Game():
             self.fps_cap = not self.fps_cap
             time.sleep(0.2)
 
+        # debugging player health
+        if keys[pygame.K_PLUS]:
+            self.player.health += 1
+            time.sleep(0.2)
+        if keys[pygame.K_MINUS]:
+            self.player.health -= 1
+            time.sleep(0.2)
+
     def start(self):
         c = 0
         while True:
@@ -110,7 +114,11 @@ class Game():
             # add sprites from loaded chunks
             self.all_sprites = pygame.sprite.Group(self.map.get_sprites(self.camera))
             self.all_sprites.add(self.companion)
-            self.all_sprites.add(self.campfire)
+            #self.all_sprites.add(self.campfire)
+
+            # add structs
+            for sprite in self.struct.sprites:
+                self.all_sprites.add(sprite)
 
             # update player
             self.all_sprites.add(self.player)
@@ -137,6 +145,12 @@ class Game():
                 for light in self.lights:                        
                     if light.is_active:
                         self.screen.blit(light.image, self.camera.apply(light))
+
+            # display overlay
+            self.overlay.life_bar.update_health(self.player.health)
+            self.overlay_sprites.update()
+            for sprite in self.overlay_sprites:
+                self.screen.blit(sprite.image, sprite.rect.topleft)
 
             #ToDo reimplement
             # draw current chunk
