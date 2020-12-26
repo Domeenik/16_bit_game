@@ -1,4 +1,14 @@
 import json
+import pygame
+import random
+
+
+def random_in_radius(rad):
+    pass
+
+def random_in_rect(rect):
+    rect = pygame.Rect(rect)
+    return pygame.Vector2(random.randint(rect.x, rect.x + rect.width - 1), random.randint(rect.y, rect.y + rect.height - 1))
 
 # a handler for managing json files as config
 class ConfigHandler():

@@ -43,6 +43,7 @@ class Game():
         #self.map = pygame.sprite.Group(self.map.get_sprites())
         #self.actions = self.map.get_interactions()
 
+        self.backgrounds = pygame.sprite.Group()
         self.all_sprites = pygame.sprite.Group()
         self.lights = pygame.sprite.Group()
         self.overlay_sprites = pygame.sprite.Group()
@@ -73,7 +74,7 @@ class Game():
         self.overlay_sprites.add(self.overlay.sprites)
 
         # map generation
-        self.map.add_entity(Entity([600,600]))
+        self.draw_background = False
 
     def user_input(self, keys):
         # update player
@@ -94,19 +95,22 @@ class Game():
             self.fps_cap = not self.fps_cap
             time.sleep(0.2)
 
-        # debugging player health
+        # debug player health
         if keys[pygame.K_PLUS]:
             self.player.health += 1
             time.sleep(0.2)
         if keys[pygame.K_MINUS]:
             self.player.health -= 1
             time.sleep(0.2)
+        
+        # debug background
+        if keys[pygame.K_b]:
+            self.draw_background = not self.draw_background
+            time.sleep(0.2)
 
     def start(self):
         c = 0
         while True:
-            # repaint background
-            self.screen.fill(self.bkg_color)
             
             # get pressed keys for control
             #ToDo implement collisions
@@ -129,9 +133,20 @@ class Game():
             self.all_sprites.update()
             self.all_sprites = pygame.sprite.Group(sorted(self.all_sprites, key=lambda x: x.pos[1])) # prints '(0, 100)'
             
-            #ToDo update only changes
-            # get camera position and translate sprites
+            # get camera position
             self.camera.update(self.player)
+
+            # render background
+            if self.draw_background:
+                self.backgrounds = pygame.sprite.Group(self.map.get_backgrounds(self.camera))
+                self.backgrounds.update()
+                for background in self.backgrounds:
+                    self.screen.blit(background.image, self.camera.apply(background))
+            else:
+                self.screen.fill(self.bkg_color)
+
+            #ToDo update only changes
+            # render sprites
             for sprite in self.all_sprites:
                 self.screen.blit(sprite.image, self.camera.apply(sprite))
             

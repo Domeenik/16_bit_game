@@ -3,6 +3,7 @@ import os
 import random
 import math
 from perlin_noise import PerlinNoise
+from complementary import *
 import time
 
 #ToDo function for generating random coords in rect
@@ -40,11 +41,15 @@ class Map():
         self.current_chunks = []
         self.current_chunk = 0
 
+        self.rect = pygame.Rect(0,0, self.size[0]*self.chunk_size[0], self.size[1]*self.chunk_size[1])
+
         self.generate_chunks()
 
         self.rect_list = []
         for chunk in self.chunks:
             self.rect_list.append(chunk.rect)
+
+        self.generate_terrain()
 
     def generate_chunks(self):
         #ToDo add external map generation -> 1. height, 2. structs, 3. keep-out, 4. forest 
@@ -52,6 +57,20 @@ class Map():
             for k in range(self.size[1]):
                 self.chunks.append(Chunk((j, k), self.chunk_size))
 
+    def get_backgrounds(self, camera):
+        #ToDo shift active chunks to own function
+        # get collided rects
+        camera_rect = pygame.Rect(- camera.camera.x, - camera.camera.y, camera.camera.width, camera.camera.height)
+        collide_rects = camera_rect.collidelistall(self.rect_list)
+
+        ret_sprites = []
+        self.current_chunks = []
+        for index in collide_rects:
+            ret_sprites.append(self.chunks[index].backgrounds)
+            self.current_chunks.append(self.chunks)
+        
+        return ret_sprites
+        
 
     def get_sprites(self, camera):
         # get collided rects
@@ -73,9 +92,32 @@ class Map():
     def add_entity(self, entity):
         pos = entity.pos
 
+        # get chunk id in which the entity is located
         chunk_id = (int(pos[1]/self.chunk_size[1]) * self.size[0]) + int(pos[0]/self.chunk_size[0])
 
-        print(chunk_id)
+        self.chunks[chunk_id].add_entity(entity)
+
+    def generate_terrain(self, seed=123):
+        bkg_res = 10
+        for chunk in self.chunks:
+            for j in range(bkg_res):
+                for k in range(bkg_res):
+                    chunk.backgrounds.append(Background([chunk.rect.x + j*int(500/bkg_res), chunk.rect.y + k*int(500/bkg_res)],
+                                                  "./img/background/ground_grass.png", 
+                                                  size=[int(500/bkg_res),int(500/bkg_res)]))
+
+        for i in range(1000):
+            self.add_entity(Oak(random_in_rect(self.rect), size=[64,64]))
+            self.add_entity(Pine(random_in_rect(self.rect), size=[64,64]))
+
+
+class Background(pygame.sprite.Sprite):
+    def __init__(self, pos, path, size=[16,16]):
+        super(Background, self).__init__()
+        self.rect = pygame.Rect(pos[0], pos[1], size[0], size[1])
+        if path.endswith(".png"):
+            self.image = pygame.transform.scale(pygame.image.load(path).convert(), [size[0], size[1]])
+
 
 class Chunk():
     def __init__(self, pos, size=[100, 100]):
@@ -84,7 +126,8 @@ class Chunk():
         self.rect = pygame.Rect(pos[1]*size[0], pos[0]*size[1], size[0], size[1])
 
         self.sprites = pygame.sprite.Group()
-        self.generate_terrain()
+        self.backgrounds = []
+        #self.generate_terrain()
 
     def generate_terrain(self):
         trees = []
@@ -284,6 +327,7 @@ class DynamicEntity(Entity):
 
     def set_offset(self, offset):
         self.pos += offset
+
 
 class StaticEntity(Entity):
     def __init__(self, pos, name=None, size=[16,16], update_rate=1):
@@ -488,6 +532,27 @@ class Campfire(DynamicEntity):
             self.toggle(not self.state)
 
 
+class Tree(StaticEntity):
+    def __init__(self, pos, name=None, size=[16,16], update_rate=1):
+        super(Tree, self).__init__(pos, name, size, update_rate)
+
+
+class Pine(Tree):
+    def __init__(self, pos, name=None, size=[16,16], update_rate=1):
+        super(Tree, self).__init__(pos, name, size, update_rate)
+
+        # load texture
+        self.add_animation("./img/trees/pine_0.png", "idle")
+
+
+class Oak(Tree):
+    def __init__(self, pos, name=None, size=[16,16], update_rate=1):
+        super(Tree, self).__init__(pos, name, size, update_rate)
+
+        # load texture
+        self.add_animation("./img/trees/tree_0.png", "idle")
+
+
 class OverlayElement(StaticEntity):
     def __init__(self, pos, name=None, size=[16,16], update_rate=1):
         super(OverlayElement, self).__init__(pos, name, size, update_rate)
@@ -515,14 +580,12 @@ class LifeBar():
         self.health = health
         self.max_health = max_health
         for i in range(len(self.sprites)):
-            if i < self.health/2:
+            if i < (self.health-1)/2:
                 self.sprites[i].set_animation("full")
-            elif i == self.health/2:
+            elif i == (self.health-1)/2:
                 self.sprites[i].set_animation("half")
-            elif i > self.health/2:
+            elif i > (self.health-1)/2:
                 self.sprites[i].set_animation("empty")
-
-
 
 class Overlay():
     def __init__(self):
