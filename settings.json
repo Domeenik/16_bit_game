@@ -22,6 +22,9 @@
             500
         ]
     },
+    "world":{
+        "day_cycling": false
+    },
     "debugging":{
         "display_fps": true,
         "draw_coll_boxes": true,

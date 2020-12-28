@@ -417,9 +417,9 @@ class Player(DynamicEntity):
         self.health = 16
 
         # light
-        self.light = Light(self.rect.topleft, size=[200,200])
-        self.light.add_animation("./img/light/circle.png")
-        self.light.follow_target(self, (0,-self.rect.height/2))
+        # self.light = Light(self.rect.topleft, size=[200,200])
+        # self.light.add_animation("./img/light/circle.png")
+        # self.light.follow_target(self, (0,-self.rect.height/2))
 
     def interaction(self, keys):
         # decrease movement

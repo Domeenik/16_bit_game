@@ -5,9 +5,6 @@ import math
 import time
 import operator
 
-import cv2 as cv
-import numpy as np
-
 # self written
 from complementary import *
 from objects import *
@@ -34,6 +31,10 @@ class Game():
         self.map = Map(size=map_size, display_size=self.size)
         self.map_size = [map_size[0]*chunk_size[0], map_size[1]*chunk_size[1]]
         self.camera = Camera(self.size)
+
+        # world settings
+        self.day_cycling = self.settings.get("world", "day_cycling")
+        self.cycle = 0
 
         # game settings
         self.render_lights = self.settings.get("graphics", "render_lights")
@@ -92,6 +93,9 @@ class Game():
         # choose not to render lights for performance boost
         if keys[pygame.K_l]:
             self.render_lights = not self.render_lights
+            time.sleep(0.2)
+        if keys[pygame.K_c]:
+            self.day_cycling = not self.day_cycling
             time.sleep(0.2)
 
         # performance mode
@@ -162,9 +166,11 @@ class Game():
                         
                 self.lights.update()
                 self.light_surf = pygame.Surface(self.size, flags=pygame.HWSURFACE)
-                cycle = int((1+math.sin(c/200))*170/2)
-                self.clr = (80 + cycle, 60 + cycle, 80 + cycle)
-                print(self.clr)
+                if self.day_cycling:
+                    self.cycle = int((1+math.sin(c/400))*170/2)
+                else: 
+                    self.cycle = 0
+                self.clr = (80 + self.cycle, 60 + self.cycle, 80 + self.cycle)
                 self.light_surf.fill(self.clr)
                 #pygame.draw.circle(self.light_surf, (200,250,250), (500,500), 100)
                 for light in self.lights:                        
