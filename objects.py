@@ -6,7 +6,10 @@ from perlin_noise import PerlinNoise
 from complementary import *
 import time
 
-#ToDo function for generating random coords in rect
+
+#ToDo load image just once for each instance
+#oak_texture = pygame.image.load("./img/trees/tree_0.png")
+#pine_texture = pygame.image.load("./img/trees/pine_0.png")
 
 class Camera():
     def __init__(self, size=[600,400], max_size=[1000,1000]):
@@ -174,8 +177,8 @@ class Light(pygame.sprite.Sprite):
 
     def update(self):        
         # update position
-        x = self.target.pos[0] - int(self.rect.width/2)
-        y = self.target.pos[1] - int(self.rect.height/2) - int(self.target.size[1]*4/3)
+        x = self.target.pos[0] - int(self.rect.width/2) + self.offset[0]
+        y = self.target.pos[1] - int(self.rect.height/2) + self.offset[1]
         self.rect = pygame.Rect(x, y, self.rect.width, self.rect.height)
         self.pos = self.rect.topleft
            
@@ -189,7 +192,7 @@ class Light(pygame.sprite.Sprite):
         self.image = self.images[self.index]
 
         # try flickering
-        self.image.set_alpha(80+(self.noise(self.counter/1000))*80)
+        self.image.set_alpha(200+(self.noise(self.counter/1000))*50)
 
 
     def add_animation(self, path, flip=False):
@@ -280,6 +283,7 @@ class Entity(pygame.sprite.Sprite):
         # update hover
         if not self.hover == None:
             self.hover.update(self)
+
 
     def add_animation(self, path, name, flip=False, update_rate=1):
         self.animations[name] = self.load_images(path, flip=flip)
@@ -410,7 +414,12 @@ class Player(DynamicEntity):
         super(Player, self).__init__(pos, name, size, update_rate)
         self.radius = 100
 
-        self.health = 10
+        self.health = 16
+
+        # light
+        self.light = Light(self.rect.topleft, size=[200,200])
+        self.light.add_animation("./img/light/circle.png")
+        self.light.follow_target(self, (0,-self.rect.height/2))
 
     def interaction(self, keys):
         # decrease movement
@@ -512,7 +521,7 @@ class Campfire(DynamicEntity):
         self.set_animation("fire_on")
 
         # light
-        self.light = Light(self.rect.topleft, size=[512,512])
+        self.light = Light(self.rect.topleft, size=[400,400])
         self.light.add_animation("./img/light/circle.png")
         self.light.follow_target(self, (0,0))
             
@@ -542,7 +551,8 @@ class Pine(Tree):
         super(Tree, self).__init__(pos, name, size, update_rate)
 
         # load texture
-        self.add_animation("./img/trees/pine_0.png", "idle")
+        self.add_animation("./img/trees/pine_0.png", "idle")            
+        #self.animations["idle"] = [pine_texture.convert_alpha()]
 
 
 class Oak(Tree):
@@ -551,6 +561,7 @@ class Oak(Tree):
 
         # load texture
         self.add_animation("./img/trees/tree_0.png", "idle")
+        #self.animations["idle"] = [oak_texture.convert_alpha()]
 
 
 class OverlayElement(StaticEntity):
@@ -560,14 +571,14 @@ class OverlayElement(StaticEntity):
 
 
 class LifeBar():
-    def __init__(self, max_health=10, health=10):
+    def __init__(self, max_health=16, health=16):
         self.sprites = []
         self.health = health
         self.max_health = max_health
 
         # init hearts
         for i in range(int(self.max_health/2)):
-            heart = OverlayElement(((i*17)+16,20), size=[20,20])
+            heart = OverlayElement(((i*21)+16,26), size=[24,24])
             heart.add_animation("./img/overlay/heart/heart_full.png", "full")
             heart.add_animation("./img/overlay/heart/heart_half.png", "half")
             heart.add_animation("./img/overlay/heart/heart_empty.png", "empty")

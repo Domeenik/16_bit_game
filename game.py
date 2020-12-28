@@ -5,6 +5,9 @@ import math
 import time
 import operator
 
+import cv2 as cv
+import numpy as np
+
 # self written
 from complementary import *
 from objects import *
@@ -19,7 +22,8 @@ class Game():
 
         # pygame objects
         pygame.init()
-        self.screen = pygame.display.set_mode(self.size, flags=pygame.DOUBLEBUF)
+        flags = pygame.DOUBLEBUF | pygame.NOFRAME
+        self.screen = pygame.display.set_mode(self.size, flags=flags)
         self.clock = pygame.time.Clock()
         self.font = pygame.font.SysFont(self.settings.get("cosmetics", "font"), 25)
         self.clock = pygame.time.Clock()
@@ -157,10 +161,17 @@ class Game():
                         self.lights.add(sprite.light)
                         
                 self.lights.update()
+                self.light_surf = pygame.Surface(self.size, flags=pygame.HWSURFACE)
+                cycle = int((1+math.sin(c/200))*170/2)
+                self.clr = (80 + cycle, 60 + cycle, 80 + cycle)
+                print(self.clr)
+                self.light_surf.fill(self.clr)
+                #pygame.draw.circle(self.light_surf, (200,250,250), (500,500), 100)
                 for light in self.lights:                        
                     if light.is_active:
-                        self.screen.blit(light.image, self.camera.apply(light))
-
+                        self.light_surf.blit(light.image, self.camera.apply(light))
+                self.screen.blit(self.light_surf, (0,0), special_flags=pygame.BLEND_MULT)
+                
             # display overlay
             self.overlay.life_bar.update_health(self.player.health)
             self.overlay_sprites.update()
@@ -180,6 +191,9 @@ class Game():
             else:
                 self.clock.tick(1000)
 
+            # clean up
+            for sprite in self.all_sprites:
+                sprite.remove()
 
             # check for quit
             for event in pygame.event.get():
@@ -190,10 +204,9 @@ class Game():
     def update_fps(self, display=False):
         self.fps = str(int(self.clock.get_fps()))
         self.fps_text = self.font.render(self.fps, 1, pygame.Color("coral"))
+        offset = self.fps_text.get_rect().width
         if self.settings.get("debugging", "display_fps"): 
-            self.screen.blit(self.fps_text, (self.size[0] - 25, 5))
-
-
+            self.screen.blit(self.fps_text, (self.size[0] - 8 - offset, 8))
 
 
 def main():
