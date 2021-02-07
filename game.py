@@ -79,7 +79,10 @@ class Game():
         self.overlay_sprites.add(self.overlay.sprites)
 
         # map generation
-        self.draw_background = False
+        self.draw_background = True
+
+        # testing background
+        self.bkg = Bkg()
 
     def user_input(self, keys):
         # update player
@@ -146,12 +149,17 @@ class Game():
 
             # render background
             if self.draw_background:
+                #m_pos = pygame.mouse.get_pos()
+                #print(m_pos)
+                #clr = pygame.Color(m_pos[0], m_pos[1], 82)
+                self.screen.fill(pygame.Color(71, 127, 82))
                 self.backgrounds = pygame.sprite.Group(self.map.get_backgrounds(self.camera))
                 self.backgrounds.update()
                 for background in self.backgrounds:
                     self.screen.blit(background.image, self.camera.apply(background))
             else:
                 self.screen.fill(self.bkg_color)
+                #self.screen.blit(self.bkg.image, self.camera.apply(self.bkg))
 
             #ToDo update only changes
             # render sprites

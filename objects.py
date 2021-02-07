@@ -11,6 +11,13 @@ import time
 #oak_texture = pygame.image.load("./img/trees/tree_0.png")
 #pine_texture = pygame.image.load("./img/trees/pine_0.png")
 
+class Bkg(pygame.sprite.Sprite):
+    def __init__(self):
+        super(Bkg, self).__init__()
+        self.image = pygame.image.load("./img/test.png").convert()
+        self.rect = pygame.Rect(0,0, 100, 100)
+
+
 class Camera():
     def __init__(self, size=[600,400], max_size=[1000,1000]):
         self.size = size
@@ -105,13 +112,25 @@ class Map():
         for chunk in self.chunks:
             for j in range(bkg_res):
                 for k in range(bkg_res):
-                    chunk.backgrounds.append(Background([chunk.rect.x + j*int(500/bkg_res), chunk.rect.y + k*int(500/bkg_res)],
-                                                  "./img/background/ground_grass.png", 
-                                                  size=[int(500/bkg_res),int(500/bkg_res)]))
+                    pattern = random.randint(0,30)
+                    if pattern == 9:
+                        chunk.backgrounds.append(Background([chunk.rect.x + j*int(500/bkg_res), chunk.rect.y + k*int(500/bkg_res)],
+                                                    "./img/background/ground_grass_flower_1.png", 
+                                                    size=[int(500/bkg_res),int(500/bkg_res)]))
+                    elif pattern == 8 or pattern == 7:
+                        chunk.backgrounds.append(Background([chunk.rect.x + j*int(500/bkg_res), chunk.rect.y + k*int(500/bkg_res)],
+                                                    "./img/background/ground_grass_leave_1.png", 
+                                                    size=[int(500/bkg_res),int(500/bkg_res)]))
+                    else:
+                        chunk.backgrounds.append(Background([chunk.rect.x + j*int(500/bkg_res), chunk.rect.y + k*int(500/bkg_res)],
+                                                    "./img/background/ground_grass_1.png", 
+                                                    size=[int(500/bkg_res),int(500/bkg_res)]))
 
         for i in range(1000):
             self.add_entity(Oak(random_in_rect(self.rect), size=[64,64]))
             self.add_entity(Pine(random_in_rect(self.rect), size=[64,64]))
+            if i % 4 == 0:
+                self.add_entity(Rock(random_in_rect(self.rect), size=[32,32]))
 
 
 class Background(pygame.sprite.Sprite):
@@ -119,7 +138,7 @@ class Background(pygame.sprite.Sprite):
         super(Background, self).__init__()
         self.rect = pygame.Rect(pos[0], pos[1], size[0], size[1])
         if path.endswith(".png"):
-            self.image = pygame.transform.scale(pygame.image.load(path).convert(), [size[0], size[1]])
+            self.image = pygame.transform.scale(pygame.image.load(path).convert_alpha(), [size[0], size[1]])
 
 
 class Chunk():
@@ -139,9 +158,9 @@ class Chunk():
             #trees.append(StaticEntity([random.randint(self.pos[0], self.pos[0] + self.size[0]), random.randint(self.pos[1], self.pos[1] + self.size[1])], size=[64, 64]))
             trees.append(StaticEntity([random.randint(self.rect.x, self.rect.x + self.size[0]), random.randint(self.rect.y, self.rect.y + self.size[1])], size=[64, 64]))
             if i >= random.randint(0,amount):
-                trees[i].add_animation("./img/trees/pine_0.png", "idle")
+                trees[i].add_animation("./img/trees/pine_bak/pine_0.png", "idle")
             else:
-                trees[i].add_animation("./img/trees/tree_0.png", "idle")
+                trees[i].add_animation("./img/trees/tree_bak/tree_0.png", "idle")
             #trees[i].update()
             self.sprites.add(trees[i])
 
@@ -541,6 +560,15 @@ class Campfire(DynamicEntity):
             self.toggle(not self.state)
 
 
+class Rock(StaticEntity):
+    def __init__(self, pos, name=None, size=[16,16], update_rate=1):
+        super(Rock, self).__init__(pos, name, size, update_rate)
+
+        # load texture
+        self.add_animation("./img/rocks/rock_0.png", "idle")            
+        #self.animations["idle"] = [pine_texture.convert_alpha()]
+
+
 class Tree(StaticEntity):
     def __init__(self, pos, name=None, size=[16,16], update_rate=1):
         super(Tree, self).__init__(pos, name, size, update_rate)
@@ -551,7 +579,7 @@ class Pine(Tree):
         super(Tree, self).__init__(pos, name, size, update_rate)
 
         # load texture
-        self.add_animation("./img/trees/pine_0.png", "idle")            
+        self.add_animation("./img/trees/pine_bak/pine_0.png", "idle")            
         #self.animations["idle"] = [pine_texture.convert_alpha()]
 
 
@@ -560,7 +588,8 @@ class Oak(Tree):
         super(Tree, self).__init__(pos, name, size, update_rate)
 
         # load texture
-        self.add_animation("./img/trees/tree_0.png", "idle")
+        self.add_animation("./img/trees/tree_bak/tree_0.png", "idle")
+        #self.add_animation("./img/trees/oak_0.png", "idle")
         #self.animations["idle"] = [oak_texture.convert_alpha()]
 
 
