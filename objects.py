@@ -31,6 +31,11 @@ class Camera():
     def set_lag(self, lag=0.1):
         self.lag = lag
 
+    def set(self, x, y):
+        x = self.size[0]/2 - x
+        y = self.size[1]/2 - y
+        self.camera = pygame.Rect(x, y, self.size[0], self.size[1])
+
     def update(self, target):
         d_x = self.camera.x - (self.size[0]/2 - target.rect.x)
         d_y = self.camera.y - (self.size[1]/2 - target.rect.y)

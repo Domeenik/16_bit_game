@@ -46,6 +46,7 @@ class Game():
         self.interface = Interface()
 
         self.add_objects()
+        self.camera.set(self.spawn[0]-16, self.spawn[1]-32)
         self.run()
 
     def add_objects(self):
