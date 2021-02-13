@@ -170,6 +170,31 @@ class Chunk():
     def update(self):
         pass
     
+class Interface():
+    def __init__(self):
+        self.keys = None
+        self.cooldowns = {}
+
+    def update(self, keys):
+        self.keys = keys
+
+        # update cooldowns
+        for key in self.cooldowns.keys():
+            if self.cooldowns[key] >= 0.1:
+                self.cooldowns[key] -= 0.1
+
+    def check_key(self, key, cooldown_time=2, threshold=0.5):
+        if not key in self.cooldowns:
+            self.cooldowns[key] = 0.0
+        if self.keys[key] and self.cooldowns[key] < threshold:
+            self.cooldowns[key] = cooldown_time
+            return True
+        return False
+
+    def is_pressed(self, key):
+        if self.keys[key]:
+            return True
+        return False
 
 class Light(pygame.sprite.Sprite):
     def __init__(self, pos, size=[16,16], transparency=128, update_rate=1):
@@ -440,15 +465,14 @@ class Player(DynamicEntity):
         # self.light.add_animation("./img/light/circle.png")
         # self.light.follow_target(self, (0,-self.rect.height/2))
 
-    def interaction(self, keys):
+    def interaction(self, interface):
         # decrease movement
         self.move_dir /= 1.5
 
         #ToDo better way to call?
-        if keys[pygame.K_e]:
+        if interface.check_key(pygame.K_e):
             for action in self.available_actions:
                 action[0].action(Action("use", "e"))
-            time.sleep(0.2)
 
         # if no movement reset animation and reset move vector
         if self.move_dir.length() < 0.1:
@@ -459,23 +483,23 @@ class Player(DynamicEntity):
             self.move_dir = pygame.Vector2(0,0)
 
         # set different speeds by shift and ctrl keys
-        if keys[pygame.K_LSHIFT]:
+        if interface.is_pressed(pygame.K_LSHIFT):
             self.speed = 3
-        elif keys[pygame.K_LCTRL]:
+        elif interface.is_pressed(pygame.K_LCTRL):
             self.speed = 1
         else:
             self.speed = 2
 
         # add movement
-        if keys[pygame.K_RIGHT]:
+        if interface.is_pressed(pygame.K_RIGHT):
             self.move_dir[0] += self.speed
             self.set_animation("walk_right")
-        if keys[pygame.K_LEFT]:
+        if interface.is_pressed(pygame.K_LEFT):
             self.move_dir[0] -= self.speed
             self.set_animation("walk_left")
-        if keys[pygame.K_UP]:
+        if interface.is_pressed(pygame.K_UP):
             self.move_dir[1] -= self.speed
-        if keys[pygame.K_DOWN]:
+        if interface.is_pressed(pygame.K_DOWN):
             self.move_dir[1] += self.speed
 
         # regulate to max speed

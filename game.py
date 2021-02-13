@@ -40,6 +40,9 @@ class Game():
         self.render_lights = self.settings.get("graphics", "render_lights")
         self.fps_cap = self.settings.get("graphics", "fps_cap")
 
+        # user keyboard interface
+        self.interface = Interface()
+
         self.add_objects()
         self.start()
 
@@ -85,8 +88,11 @@ class Game():
         self.bkg = Bkg()
 
     def user_input(self, keys):
+        # pass newest keys to the interface
+        self.interface.update(keys)
+
         # update player
-        self.player.interaction(keys)
+        self.player.interaction(self.interface)
 
         # close the game via escape
         if keys[pygame.K_ESCAPE]:
@@ -94,30 +100,25 @@ class Game():
             quit()
 
         # choose not to render lights for performance boost
-        if keys[pygame.K_l]:
+        if self.interface.check_key(pygame.K_l):
             self.render_lights = not self.render_lights
-            time.sleep(0.2)
-        if keys[pygame.K_c]:
+        if self.interface.check_key(pygame.K_c):
             self.day_cycling = not self.day_cycling
-            time.sleep(0.2)
 
         # performance mode
-        if keys[pygame.K_p]:
+        if self.interface.check_key(pygame.K_p):
             self.fps_cap = not self.fps_cap
-            time.sleep(0.2)
 
         # debug player health
-        if keys[pygame.K_PLUS]:
+        if self.interface.check_key(pygame.K_PLUS):
             self.player.health += 1
-            time.sleep(0.2)
-        if keys[pygame.K_MINUS]:
+            self.cooldowns[pygame.K_PLUS] = 1
+        if self.interface.check_key(pygame.K_MINUS):
             self.player.health -= 1
-            time.sleep(0.2)
         
         # debug background
-        if keys[pygame.K_b]:
+        if self.interface.check_key(pygame.K_b):
             self.draw_background = not self.draw_background
-            time.sleep(0.2)
 
     def start(self):
         c = 0
