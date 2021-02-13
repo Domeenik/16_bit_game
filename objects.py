@@ -23,17 +23,24 @@ class Camera():
         self.size = size
         self.camera = pygame.Rect(0, 0, size[0], size[1])
         self.max_size = max_size
+        self.lag = 0.1
 
     def apply(self, entity):
         return entity.rect.move(self.camera.topleft)
 
+    def set_lag(self, lag=0.1):
+        self.lag = lag
+
     def update(self, target):
-        x = - target.rect.x + self.size[0]/2
-        y = - target.rect.y + self.size[1]/2
+        d_x = self.camera.x - (self.size[0]/2 - target.rect.x)
+        d_y = self.camera.y - (self.size[1]/2 - target.rect.y)
+
+        x = self.camera.x - (self.lag * d_x)
+        y = self.camera.y - (self.lag * d_y)
 
         # limit to borders
-        x = min(0, x)
-        y = min(0, y)
+        #x = min(0, x)
+        #y = min(0, y)
         #x = max(-(self.size[0] - self.max_size[0]), x)
         #y = max(-(self.size[1] - self.max_size[1]), y)
     
@@ -45,7 +52,9 @@ class Map():
         self.size = size
         self.chunk_size = chunk_size
         self.display_size = display_size
+        self.generate()
 
+    def generate(self):
         # storing the Chunk-element
         self.chunks = []
         self.current_chunks = []
@@ -177,15 +186,16 @@ class Interface():
 
     def update(self, keys):
         self.keys = keys
-
         # update cooldowns
         for key in self.cooldowns.keys():
-            if self.cooldowns[key] >= 0.1:
+            if self.cooldowns[key] > 0.11:
                 self.cooldowns[key] -= 0.1
 
     def check_key(self, key, cooldown_time=2, threshold=0.5):
+        # add key if it does not exist
         if not key in self.cooldowns:
             self.cooldowns[key] = 0.0
+        # check if key press is valid
         if self.keys[key] and self.cooldowns[key] < threshold:
             self.cooldowns[key] = cooldown_time
             return True

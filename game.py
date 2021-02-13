@@ -15,7 +15,8 @@ class Game():
         self.settings = ConfigHandler("settings.json")
         self.size = [width, height]
         self.bkg_color = pygame.Color(78, 86, 82)
-        if not width: self.size = self.settings.get("general", "size")
+        if not width: 
+            self.size = self.settings.get("general", "size")
 
         # pygame objects
         pygame.init()
@@ -29,6 +30,7 @@ class Game():
         map_size = self.settings.get("map", "size")
         chunk_size = self.settings.get("map", "chunk_size")
         self.map = Map(size=map_size, display_size=self.size)
+        self.map.generate()
         self.map_size = [map_size[0]*chunk_size[0], map_size[1]*chunk_size[1]]
         self.camera = Camera(self.size)
 
@@ -44,7 +46,7 @@ class Game():
         self.interface = Interface()
 
         self.add_objects()
-        self.start()
+        self.run()
 
     def add_objects(self):
         #ToDo planned: structure like:
@@ -119,8 +121,12 @@ class Game():
         # debug background
         if self.interface.check_key(pygame.K_b):
             self.draw_background = not self.draw_background
+        
+        # regenerate map
+        if self.interface.check_key(pygame.K_0):
+            self.map.generate()
 
-    def start(self):
+    def run(self):
         c = 0
         while True:
             
