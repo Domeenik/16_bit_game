@@ -11,6 +11,7 @@ import time
 #oak_texture = pygame.image.load("./img/trees/tree_0.png")
 #pine_texture = pygame.image.load("./img/trees/pine_0.png")
 
+
 class Bkg(pygame.sprite.Sprite):
     def __init__(self):
         super(Bkg, self).__init__()
@@ -95,7 +96,6 @@ class Map():
         
         return ret_sprites
         
-
     def get_sprites(self, camera):
         # get collided rects
         camera_rect = pygame.Rect(- camera.camera.x, - camera.camera.y, camera.camera.width, camera.camera.height)
@@ -130,29 +130,42 @@ class Map():
                     if pattern == 9:
                         chunk.backgrounds.append(Background([chunk.rect.x + j*int(500/bkg_res), chunk.rect.y + k*int(500/bkg_res)],
                                                     "./img/background/ground_grass_flower_1.png", 
-                                                    size=[int(500/bkg_res),int(500/bkg_res)]))
+                                                    size=[int(500/bkg_res),int(500/bkg_res)], random_rotation=True))
                     elif pattern == 8 or pattern == 7:
                         chunk.backgrounds.append(Background([chunk.rect.x + j*int(500/bkg_res), chunk.rect.y + k*int(500/bkg_res)],
                                                     "./img/background/ground_grass_leave_1.png", 
-                                                    size=[int(500/bkg_res),int(500/bkg_res)]))
-                    else:
-                        chunk.backgrounds.append(Background([chunk.rect.x + j*int(500/bkg_res), chunk.rect.y + k*int(500/bkg_res)],
-                                                    "./img/background/ground_grass_1.png", 
-                                                    size=[int(500/bkg_res),int(500/bkg_res)]))
+                                                    size=[int(500/bkg_res),int(500/bkg_res)], random_rotation=True))
+                    # else:
+                    #     chunk.backgrounds.append(Background([chunk.rect.x + j*int(500/bkg_res), chunk.rect.y + k*int(500/bkg_res)],
+                    #                                 "./img/background/ground_grass_1.png", 
+                    #                                 size=[int(500/bkg_res),int(500/bkg_res)]))
 
+        #ToDo: add procedural generation
+        noise = PerlinNoise()
         for i in range(1000):
-            self.add_entity(Oak(random_in_rect(self.rect), size=[64,64]))
-            self.add_entity(Pine(random_in_rect(self.rect), size=[64,64]))
+            pos = random_in_rect(self.rect)
+            chance = noise([pos[0]/self.rect.width, pos[1]/self.rect.height]) + 0.5
+            if chance > 0.2:
+                self.add_entity(Oak(pos, size=[64,64]))
+                
+            pos = random_in_rect(self.rect)
+            chance = noise([pos[0]/self.rect.width, pos[1]/self.rect.height]) + 0.5
+            if chance > 0.2:
+                self.add_entity(Pine(pos, size=[64,64]))
+            #self.add_entity(Oak(random_in_rect(self.rect), size=[64,64]))
+            #self.add_entity(Pine(random_in_rect(self.rect), size=[64,64]))
             if i % 4 == 0:
                 self.add_entity(Rock(random_in_rect(self.rect), size=[32,32]))
 
 
 class Background(pygame.sprite.Sprite):
-    def __init__(self, pos, path, size=[16,16]):
+    def __init__(self, pos, path, size=[16,16], random_rotation=False):
         super(Background, self).__init__()
         self.rect = pygame.Rect(pos[0], pos[1], size[0], size[1])
         if path.endswith(".png"):
             self.image = pygame.transform.scale(pygame.image.load(path).convert_alpha(), [size[0], size[1]])
+            if random_rotation:
+                self.image = pygame.transform.rotate(self.image, 90 * random.randint(0,3))
 
 
 class Chunk():
@@ -581,8 +594,7 @@ class Campfire(DynamicEntity):
         # light
         self.light = Light(self.rect.topleft, size=[400,400])
         self.light.add_animation("./img/light/circle.png")
-        self.light.follow_target(self, (0,0))
-            
+        self.light.follow_target(self, (0,0))    
 
     def toggle(self, state=True):
         self.state = state

@@ -20,7 +20,7 @@ class Game():
 
         # pygame objects
         pygame.init()
-        flags = pygame.DOUBLEBUF | pygame.NOFRAME
+        flags = pygame.DOUBLEBUF | pygame.NOFRAME | pygame.HWSURFACE
         self.screen = pygame.display.set_mode(self.size, flags=flags)
         self.clock = pygame.time.Clock()
         self.font = pygame.font.SysFont(self.settings.get("cosmetics", "font"), 25)
@@ -45,6 +45,7 @@ class Game():
         # user keyboard interface
         self.interface = Interface()
 
+        # run
         self.add_objects()
         self.camera.set(self.spawn[0]-16, self.spawn[1]-32)
         self.run()
@@ -89,6 +90,7 @@ class Game():
 
         # testing background
         self.bkg = Bkg()
+
 
     def user_input(self, keys):
         # pass newest keys to the interface
@@ -150,7 +152,7 @@ class Game():
 
             # draw entities
             self.all_sprites.update()
-            self.all_sprites = pygame.sprite.Group(sorted(self.all_sprites, key=lambda x: x.pos[1])) # prints '(0, 100)'
+            self.all_sprites = pygame.sprite.Group(sorted(self.all_sprites, key=lambda x: x.pos[1]))
             
             # get camera position
             self.camera.update(self.player)
@@ -176,12 +178,12 @@ class Game():
             
             # render lights
             if self.render_lights:
+                self.light_surf = pygame.Surface(self.size, flags=pygame.HWSURFACE)
                 for sprite in self.all_sprites:
                     if not sprite.light == None:
                         self.lights.add(sprite.light)
                         
                 self.lights.update()
-                self.light_surf = pygame.Surface(self.size, flags=pygame.HWSURFACE)
                 if self.day_cycling:
                     self.cycle = int((1+math.sin(c/400))*170/2)
                 else: 
@@ -192,7 +194,7 @@ class Game():
                 for light in self.lights:                        
                     if light.is_active:
                         self.light_surf.blit(light.image, self.camera.apply(light))
-                self.screen.blit(self.light_surf, (0,0), special_flags=pygame.BLEND_MULT)
+                self.screen.blit(self.light_surf, (0,0), special_flags=pygame.BLEND_RGB_MULT)
                 
             # display overlay
             self.overlay.life_bar.update_health(self.player.health)
