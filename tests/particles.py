@@ -45,6 +45,8 @@ clock = pygame.time.Clock()
 particles = []
 
 c = 0
+rect_surf = pygame.Surface((6,6))
+pygame.draw.rect(rect_surf, (200, 150, 0), pygame.Rect(0,0,6,6))
 
 while True:
     screen.fill((0, 0, 0))
@@ -52,20 +54,22 @@ while True:
     c += 1
 
     rand = random.randint(-100, 100)
-    if len(particles) < 150 and c%6 == 0:
+    if len(particles) < 200 and c%6 == 0:
         particles.append(FireParticle(pygame.mouse.get_pos(), 8, (200 + rand * 0.5, 150 + rand * 0.4, 0, 0.1)))
 
     for particle in particles:
         particle.update()
 
         #pygame.draw.circle(screen, particle.color, particle.pos, int(particle.size))
-        pygame.draw.rect(screen, particle.color, pygame.Rect(particle.pos[0], particle.pos[1], particle.size, particle.size))
-        
+        pygame.draw.rect(screen, particle.color, pygame.Rect(particle.pos[0], particle.pos[1], particle.size*2, particle.size*2))
+        #pygame.draw.rect(screen, (particle.color[0], particle.color[1]*1.2, particle.color[2]), pygame.Rect(particle.pos[0] + particle.size/2, particle.pos[1] + particle.size, particle.size, particle.size))
+        #screen.blit(rect_surf, particle.pos)
+
     for particle in particles:
         if particle.lifespan < 0.01:
             particles.remove(particle)
 
-    clock.tick(60)
+    clock.tick(6000)
     pygame.display.update()
 
     for event in pygame.event.get():
