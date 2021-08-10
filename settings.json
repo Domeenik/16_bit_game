@@ -1,0 +1,33 @@
+{
+    "general": {
+        "size": [
+            1280,
+            720
+        ]
+    },
+    "cosmetics":{
+        "font": "Comic"
+    },
+    "graphics":{
+        "render_lights": false,
+        "fps_cap": true
+    },
+    "map":{
+        "size": [
+            10,
+            10
+        ],
+        "chunk_size": [
+            500,
+            500
+        ]
+    },
+    "world":{
+        "day_cycling": false
+    },
+    "debugging":{
+        "display_fps": true,
+        "draw_coll_boxes": true,
+        "draw_frames": true
+    }   
+}
