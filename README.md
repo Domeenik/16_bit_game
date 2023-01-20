@@ -23,7 +23,7 @@ A small project in which I learned the basics of game development. It was also i
 
 ## An example Screenshot of the game
 - At daytime:
-![screenshot_day](https://github.com/Domeenik/16_bit_game/blob/main/img/screenshots/0.png)
+![screenshot_day](https://github.com/Domeenik/16_bit_game/blob/main/img/screenshots/daytime.gif)
 
 - At night:
-![screenshot_night](https://github.com/Domeenik/16_bit_game/blob/main/img/screenshots/1.png)
+![screenshot_night](https://github.com/Domeenik/16_bit_game/blob/main/img/screenshots/night.gif)

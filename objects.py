@@ -1,3 +1,5 @@
+from ast import Raise
+from code import interact
 import pygame
 import os
 import random
@@ -5,6 +7,7 @@ import math
 from perlin_noise import PerlinNoise
 from complementary import *
 import time
+import json
 
 
 #ToDo load image just once for each instance
@@ -157,6 +160,14 @@ class Map():
             if i % 4 == 0:
                 self.add_entity(Rock(random_in_rect(self.rect), size=[32,32]))
 
+    def save_to_json(self, filename):
+        file = open(filename, "w")
+        chunk_list = []
+        for chunk in self.chunks:
+            chunk_list.append(chunk.get_json())
+        json.dump(chunk_list, file, indent=4)
+        file.close()
+
 
 class Background(pygame.sprite.Sprite):
     def __init__(self, pos, path, size=[16,16], random_rotation=False):
@@ -196,6 +207,16 @@ class Chunk():
 
     def update(self):
         pass
+
+    def get_json(self):
+        output = {}
+        output["pos"] = self.pos.__str__()
+        output["size"] = self.size
+        entities = []
+        for entity in self.sprites:
+            entities.append(entity.get_json())
+        output["entities"] = entities
+        return output
     
 class Interface():
     def __init__(self):
@@ -392,6 +413,11 @@ class Entity(pygame.sprite.Sprite):
             ret_images.append(pygame.transform.flip(images[i], flip, 0))
         return ret_images
 
+    def get_json(self):
+        output = {}
+        output["type"] = str(type(self))
+        output["pos"] = self.pos.__str__()
+        return output
 
 #ToDo transfer dynamic animations to dynamicEntity
 class DynamicEntity(Entity):
@@ -468,10 +494,82 @@ class Companion(DynamicEntity):
             if self.move_dir[0] > 0:
                 self.set_animation("walk_right")
             elif self.move_dir[0] < 0:
-                self.set_animation("walk_left")
-
-            
+                self.set_animation("walk_left")            
+        
         super().update()
+
+
+class Enemy(DynamicEntity):
+    def __init__(self, target, pos, name=None, size=[16,16], update_rate=1):
+        super(Enemy, self).__init__(pos, name, size, update_rate)
+
+        self.poi_rad = self.size[0]*10
+        self.spawn = pos
+        self.new_pos = pos
+
+        self.max_life = 100
+        self.life = 100
+
+        if isinstance(target, Entity):
+            self.target = target
+        else:
+            raise TypeError(f"{target} is not an Entity")
+
+    def update(self):
+        # self.move_dir = self.target.pos - self.pos
+
+        self.speed = 1.5
+        
+        # regulate to max speed
+        if self.move_dir.length() > self.speed:
+            self.move_dir = self.move_dir.normalize() * self.speed
+
+        # get point of interest
+        self.poi = self.target.pos
+
+        # calculate distance
+        distance = self.poi - self.pos
+
+        # move to new position
+        if distance.length() <= self.poi_rad - 10:
+            if not distance.length() < 10:
+                self.move_dir += distance.normalize()
+
+                # normalize vector to length of speed
+                if self.move_dir.length() > self.speed:
+                    self.move_dir = self.move_dir.normalize() * self.speed
+            
+                # add move-vetor to position
+                self.pos += self.move_dir
+        else:
+            if random.randint(0,1000) > 995:
+                self.new_pos = self.spawn + 0.5*self.poi_rad*pygame.Vector2(random.randint(-100,100)/100, random.randint(-100, 100)/100)
+
+            if not pygame.Vector2(self.new_pos - self.pos).length() < 10:
+                self.move_dir -= (self.pos - self.new_pos).normalize()
+
+                # normalize vector to length of speed
+                if self.move_dir.length() > self.speed:
+                    self.move_dir = self.move_dir.normalize() * self.speed
+            
+                # add move-vetor to position
+                self.pos += self.move_dir
+
+        super().update()
+
+
+class Ghost(Enemy):
+    def __init__(self, target, pos, name=None, size=[16,16], update_rate=1):
+        super(Ghost, self).__init__(target, pos, name, size, update_rate)
+        self.add_animation("./img/enemy/idle.png", "idle", update_rate=10)
+        self.set_animation("idle")
+
+    def action(self, action):
+        if action.name == "hit":
+            self.life -= 10
+        
+        if self.life <= 0:
+            print("dead")
 
 class Action():
     #ToDo restruct -> no need for key?
@@ -488,6 +586,8 @@ class Player(DynamicEntity):
 
         self.health = 16
 
+        self.action_keys = []
+
         # light
         # self.light = Light(self.rect.topleft, size=[200,200])
         # self.light.add_animation("./img/light/circle.png")
@@ -498,9 +598,14 @@ class Player(DynamicEntity):
         self.move_dir /= 1.5
 
         #ToDo better way to call?
-        if interface.check_key(pygame.K_e):
-            for action in self.available_actions:
-                action[0].action(Action("use", "e"))
+        for a in self.action_keys:
+            if interface.check_key(a.key):
+                for action in self.available_actions:
+                    action[0].action(a)
+
+        # if interface.check_key(pygame.K_SPACE):
+        #     for action in self.available_actions:
+        #         action[0].action(Action("hit", "space"))
 
         # if no movement reset animation and reset move vector
         if self.move_dir.length() < 0.1:
@@ -536,6 +641,9 @@ class Player(DynamicEntity):
         
         # add move vetor to position
         self.pos += self.move_dir
+
+    def add_action_key(self, action):
+        self.action_keys.append(action)
 
     def get_objects_in_range(self, entities):
         self.entities_in_range = []
@@ -609,6 +717,15 @@ class Campfire(DynamicEntity):
         #ToDo shift to entity -> some general functions
         if action.name == "use":
             self.toggle(not self.state)
+
+class Camp(Structure):
+    def __init__(self, pos):
+        super(Structure, self).__init__(pos)
+        self.pos = pygame.Vector2(pos)
+        
+        # add elements
+        self.campfire = Campfire(pos) 
+        self.add_entity(Campfire, (0, 0))
 
 
 class Rock(StaticEntity):

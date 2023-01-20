@@ -63,11 +63,16 @@ class Game():
         self.spawn = pygame.Vector2(self.map_size[0]/2, self.map_size[1]/2)
         
         # actions
-        self.use = Action("use", pygame.K_e)
+        self.a_use = Action("use", pygame.K_e)
+        self.a_hit = Action("hit", pygame.K_SPACE)
 
         # add player
         self.player = Mage([self.spawn[0],self.spawn[1]], name="player", size=[32,32])
         self.all_sprites.add(self.player)
+
+        # add actions to player
+        self.player.add_action_key(self.a_hit)
+        self.player.add_action_key(self.a_use)
 
         # add companion
         self.companion = Cat(self.player, [self.spawn[0]+100,self.spawn[1]], name="friend", size=[24,24])
@@ -75,11 +80,19 @@ class Game():
 
         # campfire
         self.campfire = Campfire((self.spawn[0]-200,self.spawn[1]), name="campfire", size=[32,32])
-        self.campfire.add_action(self.use)
+        self.campfire.add_action(self.a_use)
 
         # struct
         self.struct = Structure((self.spawn[0], self.spawn[1]))
         self.struct.add_entity(self.campfire, (10,100))
+
+        # camp
+        # self.camp = Camp((self.spawn[0]-200, self.spawn[1]+100))
+
+        # enemies
+        self.ghost = Ghost(self.player, self.spawn, size=[32,32])
+        self.ghost.add_action(self.a_hit)
+        self.all_sprites.add(self.ghost)
 
         # overlay
         self.overlay = Overlay()
@@ -113,6 +126,7 @@ class Game():
         # performance mode
         if self.interface.check_key(pygame.K_p):
             self.fps_cap = not self.fps_cap
+            time.sleep(0.1)
 
         # debug player health
         if self.interface.check_key(pygame.K_PLUS):
@@ -129,6 +143,10 @@ class Game():
         if self.interface.check_key(pygame.K_0):
             self.map.generate()
 
+        # regenerate map
+        if self.interface.check_key(pygame.K_j):
+            self.map.save_to_json("save.json")
+
     def run(self):
         c = 0
         while True:
@@ -140,6 +158,9 @@ class Game():
             self.all_sprites = pygame.sprite.Group(self.map.get_sprites(self.camera))
             self.all_sprites.add(self.companion)
             #self.all_sprites.add(self.campfire)
+
+            # add enemies
+            # self.all_sprites.add(self.ghost)
 
             # add structs
             for sprite in self.struct.sprites:
